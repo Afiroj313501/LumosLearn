@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import pool from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import { protect, authorize } from './middleware/authMiddleware.js';
+import courseRoutes from './routes/courseRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -11,6 +13,7 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
 
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
