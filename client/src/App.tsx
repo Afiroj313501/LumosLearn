@@ -5,6 +5,8 @@ import Landing from './pages/Landing';
 import AdminDashboard from './pages/AdminDashboard';
 import InstructorDashboard from './pages/InstructorDashboard';
 import StudentDashboard from './pages/StudentDashboard';
+import CourseManage from './pages/CourseManage';
+import CourseDetail from './pages/CourseDetail';
 
 function App() {
   return (
@@ -20,6 +22,12 @@ function App() {
           } />
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['STUDENT']}><StudentDashboard /></ProtectedRoute>
+          } />
+          <Route path="/instructor/course/:courseId" element={
+           <ProtectedRoute allowedRoles={['INSTRUCTOR', 'ADMIN']}><CourseManage /></ProtectedRoute>
+          } />
+          <Route path="/course/:courseId" element={
+            <ProtectedRoute><CourseDetail /></ProtectedRoute>
           } />
         </Routes>
       </BrowserRouter>

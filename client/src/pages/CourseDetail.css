@@ -1,0 +1,110 @@
+.course-detail {
+  min-height: 100vh;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  padding: 48px 56px;
+  max-width: 720px;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+.btn-back:hover { color: var(--text-primary); }
+
+.course-category {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-lumen);
+}
+
+.course-detail h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 600;
+  margin: 10px 0 6px;
+  color: var(--text-primary);
+}
+
+.course-instructor {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+
+.course-desc-full {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin: 0 0 28px;
+}
+
+.btn-solid {
+  background: var(--accent-lumen);
+  color: #1a1305;
+  border: none;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 9px;
+  cursor: pointer;
+  margin-bottom: 40px;
+}
+.btn-solid:disabled { opacity: 0.7; cursor: default; }
+
+.lessons-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.dash-empty {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.lesson-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lesson-item {
+  display: flex;
+  gap: 16px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.lesson-num {
+  font-family: 'Fraunces', serif;
+  color: var(--accent-lumen);
+  opacity: 0.6;
+  font-size: 18px;
+}
+
+.lesson-body h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 15.5px;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+}
+
+.lesson-locked {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}

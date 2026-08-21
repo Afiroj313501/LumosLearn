@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { getMyCourses, createCourse, deleteCourse } from '../api/courses';
 import type { Course } from '../api/courses';
 import './InstructorDashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -10,6 +11,7 @@ const InstructorDashboard = () => {
   const [formData, setFormData] = useState({ title: '', description: '', category: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const loadCourses = async () => {
     try {
@@ -98,7 +100,12 @@ const InstructorDashboard = () => {
       ) : (
         <div className="course-grid">
           {courses.map((c) => (
-            <div className="course-card" key={c.id}>
+            <div
+              className="course-card"
+              key={c.id}
+              onClick={() => navigate(`/instructor/course/${c.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="course-category">{c.category || 'General'}</span>
               <h3>{c.title}</h3>
               <p>{c.description}</p>
@@ -106,7 +113,13 @@ const InstructorDashboard = () => {
                 <span>{c.lessons?.length || 0} lessons</span>
                 <span>{c.enrollments?.length || 0} students</span>
               </div>
-              <button className="btn-danger" onClick={() => handleDelete(c.id)}>
+              <button
+                className="btn-danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(c.id);
+                }}
+              >
                 Delete
               </button>
             </div>

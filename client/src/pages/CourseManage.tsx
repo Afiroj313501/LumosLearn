@@ -1,0 +1,128 @@
+import { useState, useEffect, FormEvent } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getLessonsByCourse, createLesson, deleteLesson } from '../api/lessons';
+import type { Lesson } from '../api/lessons';
+import './CourseManage.css';
+
+const CourseManage = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '' });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadLessons = async () => {
+    if (!courseId) return;
+    try {
+      const res = await getLessonsByCourse(courseId);
+      setLessons(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLessons();
+  }, [courseId]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!courseId) return;
+    setError('');
+    setSubmitting(true);
+    try {
+      await createLesson(courseId, { ...formData, order: lessons.length });
+      setFormData({ title: '', content: '', videoUrl: '' });
+      setShowForm(false);
+      loadLessons();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to create lesson');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this lesson?')) return;
+    try {
+      await deleteLesson(id);
+      loadLessons();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="course-manage">
+      <button className="btn-back" onClick={() => navigate('/instructor')}>
+        ← Back to courses
+      </button>
+
+      <header className="dash-header">
+        <div>
+          <p className="dash-eyebrow">Lessons</p>
+          <h1>Manage lessons</h1>
+        </div>
+        <button className="btn-solid" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel' : '+ New lesson'}
+        </button>
+      </header>
+
+      {showForm && (
+        <form className="lesson-form" onSubmit={handleSubmit}>
+          {error && <p className="form-error">{error}</p>}
+          <input
+            placeholder="Lesson title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+          />
+          <textarea
+            placeholder="Lesson content (text)"
+            value={formData.content}
+            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            required
+            rows={5}
+          />
+          <input
+            placeholder="Video URL (optional — YouTube, Vimeo, etc.)"
+            value={formData.videoUrl}
+            onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+          />
+          <button type="submit" className="btn-solid" disabled={submitting}>
+            {submitting ? 'Adding…' : 'Add lesson'}
+          </button>
+        </form>
+      )}
+
+      {loading ? (
+        <p className="dash-empty">Loading lessons…</p>
+      ) : lessons.length === 0 ? (
+        <p className="dash-empty">No lessons yet — add your first one above.</p>
+      ) : (
+        <div className="lesson-list">
+          {lessons.map((l, idx) => (
+            <div className="lesson-item" key={l.id}>
+              <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
+              <div className="lesson-body">
+                <h3>{l.title}</h3>
+                <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '…' : ''}</p>
+                {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
+              </div>
+              <button className="btn-danger" onClick={() => handleDelete(l.id)}>
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CourseManage;
