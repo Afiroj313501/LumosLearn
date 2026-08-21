@@ -182,3 +182,14 @@
 .file-download-link:hover {
   background: rgba(242,184,75,0.18);
 }
+.file-input-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.file-input-label input[type="file"] {
+  color: var(--text-primary);
+  font-size: 13px;
+}

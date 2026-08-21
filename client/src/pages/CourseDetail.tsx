@@ -5,6 +5,9 @@ import type { Course } from '../api/courses';
 import { enrollInCourse, checkEnrollment } from '../api/enrollments';
 import { useAuth } from '../context/AuthContext';
 import { API_ORIGIN } from '../api/config';
+import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../api/assignments';
+import type { Assignment, Submission } from '../api/assignments';
+import { uploadFile } from '../api/upload';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -23,14 +26,33 @@ const CourseDetail = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [openLessonId, setOpenLessonId] = useState<string | null>(null);
 
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [mySubmissions, setMySubmissions] = useState<Record<string, Submission | null>>({});
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+
   const loadData = async () => {
     if (!courseId) return;
     try {
       const courseRes = await getCourseById(courseId);
       setCourse(courseRes.data);
+
+      let isEnrolled = false;
       if (user?.role === 'STUDENT') {
         const enrollRes = await checkEnrollment(courseId);
-        setEnrolled(enrollRes.data.enrolled);
+        isEnrolled = enrollRes.data.enrolled;
+        setEnrolled(isEnrolled);
+      }
+
+      const assignRes = await getAssignmentsByCourse(courseId);
+      setAssignments(assignRes.data);
+
+      if (user?.role === 'STUDENT') {
+        const subs: Record<string, Submission | null> = {};
+        for (const a of assignRes.data) {
+          const subRes = await getMySubmission(a.id);
+          subs[a.id] = subRes.data;
+        }
+        setMySubmissions(subs);
       }
     } catch (err) {
       console.error(err);
@@ -53,6 +75,23 @@ const CourseDetail = () => {
       console.error(err);
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId: string, file: File) => {
+    setUploadingFor(assignmentId);
+    try {
+      const uploadRes = await uploadFile(file);
+      await submitAssignment(assignmentId, {
+        fileUrl: uploadRes.data.fileUrl,
+        fileName: uploadRes.data.fileName,
+      });
+      const subRes = await getMySubmission(assignmentId);
+      setMySubmissions((prev) => ({ ...prev, [assignmentId]: subRes.data }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingFor(null);
     }
   };
 
@@ -80,7 +119,7 @@ const CourseDetail = () => {
         </button>
       )}
 
-      <h2 className="lessons-heading">Lessons</h2>
+      <h2 className="l<a<aessons-heading">Lessons</h2>
       {course.lessons && course.lessons.length > 0 ? (
         <div className="lesson-list">
           {course.lessons.map((l: any, idx: number) => {
@@ -136,6 +175,57 @@ const CourseDetail = () => {
         </div>
       ) : (
         <p className="dash-empty">No lessons published yet.</p>
+      )}
+
+      {assignments.length > 0 && (
+        <>
+          <h2 className="lessons-heading" style={{ marginTop: '40px' }}>Assignments</h2>
+          <div className="lesson-list">
+            {assignments.map((a) => {
+              const mySub = mySubmissions[a.id];
+              return (
+                <div className="lesson-item-detail" key={a.id} style={{ padding: '18px 20px' }}>
+                  <h3 style={{ fontFamily: 'Fraunces, serif', fontSize: '16px', margin: '0 0 8px', color: 'var(--text-primary)' }}>
+                    {a.title}
+                  </h3>
+                  <p className="lesson-text">{a.description}</p>
+                  {a.dueDate && (
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '8px 0' }}>
+                      Due {new Date(a.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  {user?.role === 'STUDENT' && canView && (
+                    mySub ? (
+                      <div style={{ marginTop: '10px' }}>
+                        <span className="file-download-link">
+                          Submitted: {mySub.fileName}
+                        </span>
+                        {mySub.grade != null && (
+                          <p style={{ fontSize: '13px', color: 'var(--accent-lumen)', marginTop: '8px' }}>
+                            Grade: {mySub.grade}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <label className="file-input-label" style={{ marginTop: '10px' }}>
+                        {uploadingFor === a.id ? 'Uploading...' : 'Upload your submission'}
+                        <input
+                          type="file"
+                          disabled={uploadingFor === a.id}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleSubmitAssignment(a.id, f);
+                          }}
+                        />
+                      </label>
+                    )
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

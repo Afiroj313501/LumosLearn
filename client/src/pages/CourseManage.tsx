@@ -3,11 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
 import { uploadFile } from '../api/upload';
+import {
+  getAssignmentsByCourse,
+  createAssignment,
+  deleteAssignment,
+  getAssignmentSubmissions,
+} from '../api/assignments';
+import type { Assignment, Submission } from '../api/assignments';
+import { API_ORIGIN } from '../api/config';
 import './CourseManage.css';
 
 const CourseManage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -15,6 +24,14 @@ const CourseManage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [showAssignForm, setShowAssignForm] = useState(false);
+  const [assignFormData, setAssignFormData] = useState({ title: '', description: '', dueDate: '' });
+  const [assignError, setAssignError] = useState('');
+  const [assignSubmitting, setAssignSubmitting] = useState(false);
+  const [viewingSubmissionsFor, setViewingSubmissionsFor] = useState<string | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
 
   const loadLessons = async () => {
     if (!courseId) return;
@@ -28,8 +45,19 @@ const CourseManage = () => {
     }
   };
 
+  const loadAssignments = async () => {
+    if (!courseId) return;
+    try {
+      const res = await getAssignmentsByCourse(courseId);
+      setAssignments(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadLessons();
+    loadAssignments();
   }, [courseId]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -74,10 +102,51 @@ const CourseManage = () => {
     }
   };
 
+  const handleAssignSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!courseId) return;
+    setAssignError('');
+    setAssignSubmitting(true);
+    try {
+      await createAssignment(courseId, assignFormData);
+      setAssignFormData({ title: '', description: '', dueDate: '' });
+      setShowAssignForm(false);
+      loadAssignments();
+    } catch (err: any) {
+      setAssignError(err.response?.data?.error || 'Failed to create assignment');
+    } finally {
+      setAssignSubmitting(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (id: string) => {
+    if (!confirm('Delete this assignment?')) return;
+    try {
+      await deleteAssignment(id);
+      loadAssignments();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleViewSubmissions = async (id: string) => {
+    if (viewingSubmissionsFor === id) {
+      setViewingSubmissionsFor(null);
+      return;
+    }
+    try {
+      const res = await getAssignmentSubmissions(id);
+      setSubmissions(res.data);
+      setViewingSubmissionsFor(id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="course-manage">
       <button className="btn-back" onClick={() => navigate('/instructor')}>
-        ← Back to courses
+        Back to courses
       </button>
 
       <header className="dash-header">
@@ -107,7 +176,7 @@ const CourseManage = () => {
             rows={5}
           />
           <input
-            placeholder="Video URL (optional — YouTube, Vimeo, etc.)"
+            placeholder="Video URL (optional - YouTube, Vimeo, etc.)"
             value={formData.videoUrl}
             onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
           />
@@ -121,15 +190,15 @@ const CourseManage = () => {
           </label>
           {file && <span className="file-selected">Selected: {file.name}</span>}
           <button type="submit" className="btn-solid" disabled={submitting}>
-            {submitting ? 'Uploading & adding…' : 'Add lesson'}
+            {submitting ? 'Uploading & adding...' : 'Add lesson'}
           </button>
         </form>
       )}
 
       {loading ? (
-        <p className="dash-empty">Loading lessons…</p>
+        <p className="dash-empty">Loading lessons...</p>
       ) : lessons.length === 0 ? (
-        <p className="dash-empty">No lessons yet — add your first one above.</p>
+        <p className="dash-empty">No lessons yet - add your first one above.</p>
       ) : (
         <div className="lesson-list">
           {lessons.map((l, idx) => (
@@ -137,7 +206,7 @@ const CourseManage = () => {
               <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
               <div className="lesson-body">
                 <h3>{l.title}</h3>
-                <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '…' : ''}</p>
+                <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '...' : ''}</p>
                 <div className="lesson-tags">
                   {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
                   {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
@@ -146,6 +215,94 @@ const CourseManage = () => {
               <button className="btn-danger" onClick={() => handleDelete(l.id)}>
                 Delete
               </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <header className="dash-header" style={{ marginTop: '48px' }}>
+        <div>
+          <p className="dash-eyebrow">Assignments</p>
+          <h1>Manage assignments</h1>
+        </div>
+        <button className="btn-solid" onClick={() => setShowAssignForm(!showAssignForm)}>
+          {showAssignForm ? 'Cancel' : '+ New assignment'}
+        </button>
+      </header>
+
+      {showAssignForm && (
+        <form className="lesson-form" onSubmit={handleAssignSubmit}>
+          {assignError && <p className="form-error">{assignError}</p>}
+          <input
+            placeholder="Assignment title"
+            value={assignFormData.title}
+            onChange={(e) => setAssignFormData({ ...assignFormData, title: e.target.value })}
+            required
+          />
+          <textarea
+            placeholder="Instructions"
+            value={assignFormData.description}
+            onChange={(e) => setAssignFormData({ ...assignFormData, description: e.target.value })}
+            required
+            rows={4}
+          />
+          <label className="file-input-label">
+            Due date (optional)
+            <input
+              type="date"
+              value={assignFormData.dueDate}
+              onChange={(e) => setAssignFormData({ ...assignFormData, dueDate: e.target.value })}
+            />
+          </label>
+          <button type="submit" className="btn-solid" disabled={assignSubmitting}>
+            {assignSubmitting ? 'Creating...' : 'Create assignment'}
+          </button>
+        </form>
+      )}
+
+      {assignments.length === 0 ? (
+        <p className="dash-empty">No assignments yet.</p>
+      ) : (
+        <div className="lesson-list">
+          {assignments.map((a) => (
+            <div className="lesson-item" key={a.id}>
+              <div className="lesson-body">
+                <h3>{a.title}</h3>
+                <p>{a.description.slice(0, 140)}{a.description.length > 140 ? '...' : ''}</p>
+                {a.dueDate && (
+                  <span className="lesson-file-tag">
+                    Due {new Date(a.dueDate).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button className="btn-outline-small" onClick={() => handleViewSubmissions(a.id)}>
+                  {viewingSubmissionsFor === a.id ? 'Hide' : 'View'} submissions
+                </button>
+                <button className="btn-danger" onClick={() => handleDeleteAssignment(a.id)}>
+                  Delete
+                </button>
+              </div>
+
+              {viewingSubmissionsFor === a.id && (
+                <div className="submissions-panel">
+                  {submissions.length === 0 ? (
+                    <p className="dash-empty">No submissions yet.</p>
+                  ) : (
+                    submissions.map((s) => (
+                      <div className="submission-row" key={s.id}>
+                        <span>{s.student?.name}</span>
+                        <a href={`${API_ORIGIN}${s.fileUrl}`} target="_blank" rel="noreferrer">
+                          {s.fileName}
+                        </a>
+                        <span className="submission-date">
+                          {new Date(s.submittedAt).toLocaleString()}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

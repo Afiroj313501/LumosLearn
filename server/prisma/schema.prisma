@@ -31,6 +31,7 @@ model User {
   enrollments   Enrollment[]
   submissions   Submission[]
   certificates  Certificate[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model Course {
@@ -49,6 +50,7 @@ model Course {
   enrollments  Enrollment[]
   quizzes      Quiz[]
   certificates Certificate[]
+  assignments  Assignment[]
 }
 
 model Lesson {
@@ -143,4 +145,36 @@ model Certificate {
   course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, courseId])
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  dueDate     DateTime?
+  fileUrl     String?
+  fileName    String?
+  createdAt   DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id          String   @id @default(uuid())
+  fileUrl     String
+  fileName    String
+  submittedAt DateTime @default(now())
+  grade       Float?
+  feedback    String?
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
 }

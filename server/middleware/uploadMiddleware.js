@@ -10,14 +10,14 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedTypes = ['.pdf', '.ppt', '.pptx'];
+const allowedTypes = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.zip', '.png', '.jpg', '.jpeg'];
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only PDF and PPT/PPTX files are allowed'));
+    cb(new Error('Only allowed file types are PDF, PPT, PPTX, DOC, DOCX, ZIP, PNG, JPG, and JPEG'));
   }
 };
 

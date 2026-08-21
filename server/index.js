@@ -8,6 +8,7 @@ import courseRoutes from './routes/courseRoutes.js';
 import lessonRoutes from './routes/lessonRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import assignmentRoutes from './routes/assignmentRoutes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/upload', uploadRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
