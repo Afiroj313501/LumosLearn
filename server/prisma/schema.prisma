@@ -54,8 +54,10 @@ model Course {
 model Lesson {
   id        String   @id @default(uuid())
   title     String
-  content   String   // text content for the lesson
+  content   String
   videoUrl  String?
+  fileUrl   String?
+  fileName  String?
   order     Int      @default(0)
   createdAt DateTime @default(now())
 

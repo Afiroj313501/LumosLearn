@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
+import { uploadFile } from '../api/upload';
 import './CourseManage.css';
 
 const CourseManage = () => {
@@ -11,6 +12,7 @@ const CourseManage = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '' });
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,8 +38,23 @@ const CourseManage = () => {
     setError('');
     setSubmitting(true);
     try {
-      await createLesson(courseId, { ...formData, order: lessons.length });
+      let fileUrl: string | undefined;
+      let fileName: string | undefined;
+
+      if (file) {
+        const uploadRes = await uploadFile(file);
+        fileUrl = uploadRes.data.fileUrl;
+        fileName = uploadRes.data.fileName;
+      }
+
+      await createLesson(courseId, {
+        ...formData,
+        fileUrl,
+        fileName,
+        order: lessons.length,
+      });
       setFormData({ title: '', content: '', videoUrl: '' });
+      setFile(null);
       setShowForm(false);
       loadLessons();
     } catch (err: any) {
@@ -94,8 +111,17 @@ const CourseManage = () => {
             value={formData.videoUrl}
             onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
           />
+          <label className="file-input-label">
+            Attach PDF or PPTX (optional)
+            <input
+              type="file"
+              accept=".pdf,.ppt,.pptx"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          {file && <span className="file-selected">Selected: {file.name}</span>}
           <button type="submit" className="btn-solid" disabled={submitting}>
-            {submitting ? 'Adding…' : 'Add lesson'}
+            {submitting ? 'Uploading & adding…' : 'Add lesson'}
           </button>
         </form>
       )}
@@ -112,7 +138,10 @@ const CourseManage = () => {
               <div className="lesson-body">
                 <h3>{l.title}</h3>
                 <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '…' : ''}</p>
-                {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
+                <div className="lesson-tags">
+                  {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
+                  {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
+                </div>
               </div>
               <button className="btn-danger" onClick={() => handleDelete(l.id)}>
                 Delete

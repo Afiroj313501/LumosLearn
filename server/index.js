@@ -7,6 +7,7 @@ import { protect, authorize } from './middleware/authMiddleware.js';
 import courseRoutes from './routes/courseRoutes.js';
 import lessonRoutes from './routes/lessonRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api/upload', uploadRoutes);
 
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
@@ -42,4 +45,12 @@ app.get('/api/db-test', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+app.use((err, req, res, next) => {
+  if (err) {
+    console.error(err);
+    return res.status(400).json({ error: err.message || 'Upload failed' });
+  }
+  next();
+});
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

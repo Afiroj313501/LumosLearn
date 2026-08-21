@@ -108,3 +108,77 @@
   color: var(--text-muted);
   margin: 0;
 }
+
+.lesson-item-detail {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lesson-item-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: none;
+  border: none;
+  padding: 16px 20px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lesson-item-header h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 15.5px;
+  margin: 0;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.lesson-content-panel {
+  padding: 0 20px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lesson-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.video-embed-wrap {
+  position: relative;
+  padding-top: 56.25%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.video-embed-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-link,
+.file-download-link {
+  display: inline-block;
+  width: fit-content;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-lumen);
+  background: rgba(242,184,75,0.1);
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.video-link:hover,
+.file-download-link:hover {
+  background: rgba(242,184,75,0.18);
+}

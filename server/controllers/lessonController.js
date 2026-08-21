@@ -3,7 +3,7 @@ import prisma from '../config/prisma.js';
 export const createLesson = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { title, content, videoUrl, order } = req.body;
+    const { title, content, videoUrl, fileUrl, fileName, order } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
@@ -20,6 +20,8 @@ export const createLesson = async (req, res) => {
         title,
         content,
         videoUrl,
+        fileUrl,
+        fileName,
         order: order ?? 0,
         courseId,
       },
@@ -56,10 +58,10 @@ export const updateLesson = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to edit this lesson' });
     }
 
-    const { title, content, videoUrl, order } = req.body;
+    const { title, content, videoUrl, fileUrl, fileName, order } = req.body;
     const updated = await prisma.lesson.update({
       where: { id: req.params.id },
-      data: { title, content, videoUrl, order },
+      data: { title, content, videoUrl, fileUrl, fileName, order },
     });
     res.json(updated);
   } catch (err) {
