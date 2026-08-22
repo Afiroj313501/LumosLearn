@@ -48,7 +48,6 @@ model Course {
 
   lessons      Lesson[]
   enrollments  Enrollment[]
-  quizzes      Quiz[]
   certificates Certificate[]
   assignments  Assignment[]
 }
@@ -67,6 +66,7 @@ model Lesson {
   course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   progress  Progress[]
+  quiz      Quiz?
 }
 
 model Enrollment {
@@ -102,8 +102,8 @@ model Quiz {
   title     String
   createdAt DateTime @default(now())
 
-  courseId  String
-  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId  String @unique
+  lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   questions   Question[]
   submissions Submission[]
@@ -131,6 +131,8 @@ model Submission {
 
   quizId String
   quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, quizId])
 }
 
 model Certificate {

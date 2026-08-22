@@ -10,6 +10,8 @@ import {
   getAssignmentSubmissions,
 } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
+import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi } from '../api/quizzes';
+import type { Quiz, QuizQuestion } from '../api/quizzes';
 import { API_ORIGIN } from '../api/config';
 import './CourseManage.css';
 
@@ -33,11 +35,34 @@ const CourseManage = () => {
   const [viewingSubmissionsFor, setViewingSubmissionsFor] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
+  const [quizzesByLesson, setQuizzesByLesson] = useState<Record<string, Quiz | null>>({});
+  const [buildingQuizFor, setBuildingQuizFor] = useState<string | null>(null);
+  const [quizTitle, setQuizTitle] = useState('');
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
+    { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' },
+  ]);
+  const [quizError, setQuizError] = useState('');
+  const [quizSubmitting, setQuizSubmitting] = useState(false);
+
+  const loadQuizzes = async (lessonList: Lesson[]) => {
+    const results: Record<string, Quiz | null> = {};
+    for (const l of lessonList) {
+      try {
+        const res = await getQuizByLesson(l.id);
+        results[l.id] = res.data;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setQuizzesByLesson(results);
+  };
+
   const loadLessons = async () => {
     if (!courseId) return;
     try {
       const res = await getLessonsByCourse(courseId);
       setLessons(res.data);
+      loadQuizzes(res.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -143,6 +168,62 @@ const CourseManage = () => {
     }
   };
 
+  const addQuestion = () => {
+    setQuizQuestions([...quizQuestions, { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' }]);
+  };
+
+  const removeQuestion = (idx: number) => {
+    setQuizQuestions(quizQuestions.filter((_, i) => i !== idx));
+  };
+
+  const updateQuestion = (idx: number, field: keyof QuizQuestion, value: any) => {
+    const updated = [...quizQuestions];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setQuizQuestions(updated);
+  };
+
+  const updateOption = (qIdx: number, optIdx: number, value: string) => {
+    const updated = [...quizQuestions];
+    const opts = [...(updated[qIdx].options || [])];
+    opts[optIdx] = value;
+    updated[qIdx] = { ...updated[qIdx], options: opts };
+    setQuizQuestions(updated);
+  };
+
+  const handleCreateQuiz = async (lessonId: string) => {
+    setQuizError('');
+    if (!quizTitle.trim()) {
+      setQuizError('Quiz title is required');
+      return;
+    }
+    if (quizQuestions.some((q) => !q.text.trim() || !q.correctAnswer.trim())) {
+      setQuizError('All questions need text and a correct answer');
+      return;
+    }
+    setQuizSubmitting(true);
+    try {
+      await createQuiz(lessonId, { title: quizTitle, questions: quizQuestions });
+      setBuildingQuizFor(null);
+      setQuizTitle('');
+      setQuizQuestions([{ text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' }]);
+      loadQuizzes(lessons);
+    } catch (err: any) {
+      setQuizError(err.response?.data?.error || 'Failed to create quiz');
+    } finally {
+      setQuizSubmitting(false);
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId: string, lessonId: string) => {
+    if (!confirm('Delete this quiz?')) return;
+    try {
+      await deleteQuizApi(quizId);
+      setQuizzesByLesson({ ...quizzesByLesson, [lessonId]: null });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="course-manage">
       <button className="btn-back" onClick={() => navigate('/instructor')}>
@@ -201,22 +282,116 @@ const CourseManage = () => {
         <p className="dash-empty">No lessons yet - add your first one above.</p>
       ) : (
         <div className="lesson-list">
-          {lessons.map((l, idx) => (
-            <div className="lesson-item" key={l.id}>
-              <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
-              <div className="lesson-body">
-                <h3>{l.title}</h3>
-                <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '...' : ''}</p>
-                <div className="lesson-tags">
-                  {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
-                  {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
+          {lessons.map((l, idx) => {
+            const quiz = quizzesByLesson[l.id];
+            const isBuildingQuiz = buildingQuizFor === l.id;
+
+            return (
+              <div key={l.id}>
+                <div className="lesson-item">
+                  <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
+                  <div className="lesson-body">
+                    <h3>{l.title}</h3>
+                    <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '...' : ''}</p>
+                    <div className="lesson-tags">
+                      {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
+                      {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
+                      {quiz && <span className="lesson-video-tag">Has quiz ({quiz.questions.length} Qs)</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {quiz ? (
+                      <button className="btn-danger" onClick={() => handleDeleteQuiz(quiz.id, l.id)}>
+                        Delete quiz
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-outline-small"
+                        onClick={() => setBuildingQuizFor(isBuildingQuiz ? null : l.id)}
+                      >
+                        {isBuildingQuiz ? 'Cancel' : '+ Add quiz'}
+                      </button>
+                    )}
+                    <button className="btn-danger" onClick={() => handleDelete(l.id)}>
+                      Delete lesson
+                    </button>
+                  </div>
                 </div>
+
+                {isBuildingQuiz && (
+                  <div className="quiz-builder">
+                    {quizError && <p className="form-error">{quizError}</p>}
+                    <input
+                      placeholder="Quiz title"
+                      value={quizTitle}
+                      onChange={(e) => setQuizTitle(e.target.value)}
+                    />
+
+                    {quizQuestions.map((q, qIdx) => (
+                      <div className="quiz-question-block" key={qIdx}>
+                        <div className="quiz-question-header">
+                          <span>Question {qIdx + 1}</span>
+                          {quizQuestions.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn-remove-small"
+                              onClick={() => removeQuestion(qIdx)}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          placeholder="Question text"
+                          value={q.text}
+                          onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
+                        />
+                        <select
+                          value={q.type}
+                          onChange={(e) => updateQuestion(qIdx, 'type', e.target.value)}
+                          className="quiz-select"
+                        >
+                          <option value="MCQ">Multiple choice</option>
+                          <option value="SHORT_ANSWER">Short answer</option>
+                        </select>
+
+                        {q.type === 'MCQ' && (
+                          <div className="quiz-options-grid">
+                            {(q.options || []).map((opt, optIdx) => (
+                              <input
+                                key={optIdx}
+                                placeholder={`Option ${optIdx + 1}`}
+                                value={opt}
+                                onChange={(e) => updateOption(qIdx, optIdx, e.target.value)}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        <input
+                          placeholder="Correct answer (exact text)"
+                          value={q.correctAnswer}
+                          onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
+                        />
+                      </div>
+                    ))}
+
+                    <button type="button" className="btn-outline-small" onClick={addQuestion}>
+                      + Add question
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-solid"
+                      onClick={() => handleCreateQuiz(l.id)}
+                      disabled={quizSubmitting}
+                    >
+                      {quizSubmitting ? 'Saving...' : 'Save quiz'}
+                    </button>
+                  </div>
+                )}
               </div>
-              <button className="btn-danger" onClick={() => handleDelete(l.id)}>
-                Delete
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

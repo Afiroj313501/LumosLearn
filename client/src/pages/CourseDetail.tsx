@@ -8,6 +8,9 @@ import { API_ORIGIN } from '../api/config';
 import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
 import { uploadFile } from '../api/upload';
+import { markLessonComplete, unmarkLessonComplete, getCourseProgress } from '../api/progress';
+import { getQuizByLesson, submitQuiz, getMyQuizSubmission } from '../api/quizzes';
+import type { Quiz, QuizSubmission } from '../api/quizzes';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -30,6 +33,16 @@ const CourseDetail = () => {
   const [mySubmissions, setMySubmissions] = useState<Record<string, Submission | null>>({});
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
 
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
+  const [progressPct, setProgressPct] = useState(0);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+
+  const [quizzesByLesson, setQuizzesByLesson] = useState<Record<string, Quiz | null>>({});
+  const [quizSubmissions, setQuizSubmissions] = useState<Record<string, QuizSubmission | null>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, Record<string, string>>>({});
+  const [submittingQuiz, setSubmittingQuiz] = useState<string | null>(null);
+  const [quizResult, setQuizResult] = useState<Record<string, { score: number; correctCount: number; total: number }>>({});
+
   const loadData = async () => {
     if (!courseId) return;
     try {
@@ -41,6 +54,14 @@ const CourseDetail = () => {
         const enrollRes = await checkEnrollment(courseId);
         isEnrolled = enrollRes.data.enrolled;
         setEnrolled(isEnrolled);
+
+        if (isEnrolled) {
+          const progRes = await getCourseProgress(courseId);
+          const ids = new Set(progRes.data.completedLessonIds);
+          setCompletedLessonIds(ids);
+          const total = courseRes.data.lessons?.length || 0;
+          setProgressPct(total > 0 ? (ids.size / total) * 100 : 0);
+        }
       }
 
       const assignRes = await getAssignmentsByCourse(courseId);
@@ -53,6 +74,21 @@ const CourseDetail = () => {
           subs[a.id] = subRes.data;
         }
         setMySubmissions(subs);
+      }
+
+      if (courseRes.data.lessons) {
+        const quizzes: Record<string, Quiz | null> = {};
+        const qSubs: Record<string, QuizSubmission | null> = {};
+        for (const l of courseRes.data.lessons as any[]) {
+          const qRes = await getQuizByLesson(l.id);
+          quizzes[l.id] = qRes.data;
+          if (qRes.data && user?.role === 'STUDENT') {
+            const subRes = await getMyQuizSubmission(qRes.data.id);
+            qSubs[qRes.data.id] = subRes.data;
+          }
+        }
+        setQuizzesByLesson(quizzes);
+        setQuizSubmissions(qSubs);
       }
     } catch (err) {
       console.error(err);
@@ -95,6 +131,48 @@ const CourseDetail = () => {
     }
   };
 
+  const handleToggleComplete = async (lessonId: string) => {
+    setMarkingId(lessonId);
+    try {
+      const isCompleted = completedLessonIds.has(lessonId);
+      const res = isCompleted
+        ? await unmarkLessonComplete(lessonId)
+        : await markLessonComplete(lessonId);
+
+      const newSet = new Set(completedLessonIds);
+      if (isCompleted) newSet.delete(lessonId);
+      else newSet.add(lessonId);
+      setCompletedLessonIds(newSet);
+      setProgressPct(res.data.progressPct);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const handleAnswerChange = (quizId: string, questionId: string, value: string) => {
+    setQuizAnswers((prev) => ({
+      ...prev,
+      [quizId]: { ...(prev[quizId] || {}), [questionId]: value },
+    }));
+  };
+
+  const handleSubmitQuiz = async (quizId: string) => {
+    setSubmittingQuiz(quizId);
+    try {
+      const answers = quizAnswers[quizId] || {};
+      const res = await submitQuiz(quizId, answers);
+      setQuizResult((prev) => ({ ...prev, [quizId]: res.data }));
+      const subRes = await getMyQuizSubmission(quizId);
+      setQuizSubmissions((prev) => ({ ...prev, [quizId]: subRes.data }));
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSubmittingQuiz(null);
+    }
+  };
+
   if (loading) return <div className="course-detail"><p className="dash-empty">Loading...</p></div>;
   if (!course) return <div className="course-detail"><p className="dash-empty">Course not found.</p></div>;
 
@@ -119,12 +197,22 @@ const CourseDetail = () => {
         </button>
       )}
 
-      <h2 className="l<a<aessons-heading">Lessons</h2>
+      {user?.role === 'STUDENT' && enrolled && (
+        <div className="progress-summary">
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+          </div>
+          <span className="progress-label">{Math.round(progressPct)}% complete</span>
+        </div>
+      )}
+
+      <h2 className="lessons-heading">Lessons</h2>
       {course.lessons && course.lessons.length > 0 ? (
         <div className="lesson-list">
           {course.lessons.map((l: any, idx: number) => {
             const isOpen = openLessonId === l.id;
             const embedUrl = l.videoUrl ? getEmbedUrl(l.videoUrl) : null;
+            const quiz = quizzesByLesson[l.id];
 
             return (
               <div className="lesson-item-detail" key={l.id}>
@@ -134,6 +222,8 @@ const CourseDetail = () => {
                 >
                   <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
                   <h3>{l.title}</h3>
+                  {completedLessonIds.has(l.id) && <span className="lesson-done-tag">Done</span>}
+                  {quiz && <span className="lesson-done-tag">Quiz</span>}
                   {!canView && <span className="lesson-locked">Enroll to unlock</span>}
                 </button>
 
@@ -166,6 +256,83 @@ const CourseDetail = () => {
                       >
                         Download {l.fileName || 'attachment'}
                       </a>
+                    )}
+
+                    {user?.role === 'STUDENT' && enrolled && (
+                      <button
+                        className={completedLessonIds.has(l.id) ? 'btn-complete done' : 'btn-complete'}
+                        onClick={() => handleToggleComplete(l.id)}
+                        disabled={markingId === l.id}
+                      >
+                        {markingId === l.id
+                          ? 'Updating...'
+                          : completedLessonIds.has(l.id)
+                          ? 'Completed'
+                          : 'Mark as complete'}
+                      </button>
+                    )}
+
+                    {quiz && (
+                      <div className="quiz-panel">
+                        <h4 className="quiz-panel-title">{quiz.title}</h4>
+
+                        {user?.role !== 'STUDENT' ? (
+                          <p className="dash-empty">Quiz preview (instructor view).</p>
+                        ) : !enrolled ? (
+                          <p className="dash-empty">Enroll to take this quiz.</p>
+                        ) : quizSubmissions[quiz.id] ? (
+                          <div className="quiz-result">
+                            <p>You scored <strong>{Math.round(quizSubmissions[quiz.id]!.score)}%</strong> on this quiz.</p>
+                          </div>
+                        ) : quizResult[quiz.id] ? (
+                          <div className="quiz-result">
+                            <p>
+                              You got <strong>{quizResult[quiz.id].correctCount}/{quizResult[quiz.id].total}</strong> correct
+                              ({Math.round(quizResult[quiz.id].score)}%).
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="quiz-form">
+                            {quiz.questions.map((q, qIdx) => (
+                              <div className="quiz-question-view" key={q.id}>
+                                <p className="quiz-question-text">
+                                  {qIdx + 1}. {q.text}
+                                </p>
+                                {q.type === 'MCQ' && q.options ? (
+                                  <div className="quiz-options-list">
+                                    {q.options.map((opt, optIdx) => (
+                                      <label className="quiz-option-label" key={optIdx}>
+                                        <input
+                                          type="radio"
+                                          name={`q-${q.id}`}
+                                          value={opt}
+                                          checked={quizAnswers[quiz.id]?.[q.id!] === opt}
+                                          onChange={() => handleAnswerChange(quiz.id, q.id!, opt)}
+                                        />
+                                        {opt}
+                                      </label>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <input
+                                    className="quiz-short-answer"
+                                    placeholder="Your answer"
+                                    value={quizAnswers[quiz.id]?.[q.id!] || ''}
+                                    onChange={(e) => handleAnswerChange(quiz.id, q.id!, e.target.value)}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              className="btn-solid"
+                              onClick={() => handleSubmitQuiz(quiz.id)}
+                              disabled={submittingQuiz === quiz.id}
+                            >
+                              {submittingQuiz === quiz.id ? 'Submitting...' : 'Submit quiz'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

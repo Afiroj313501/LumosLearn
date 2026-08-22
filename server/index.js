@@ -9,6 +9,8 @@ import lessonRoutes from './routes/lessonRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
+import progressRoutes from './routes/progressRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
 
 dotenv.config();
 
@@ -23,7 +25,8 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/assignments', assignmentRoutes);
-
+app.use('/api/progress', progressRoutes);
+app.use('/api/quizzes', quizRoutes);
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
 });
