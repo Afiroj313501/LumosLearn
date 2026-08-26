@@ -6,6 +6,7 @@ import {
   submitAssignment,
   getMySubmission,
   deleteAssignment,
+  gradeSubmission,
 } from '../controllers/assignmentController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -17,5 +18,6 @@ router.delete('/:id', protect, authorize('INSTRUCTOR', 'ADMIN'), deleteAssignmen
 router.get('/:id/submissions', protect, authorize('INSTRUCTOR', 'ADMIN'), getAssignmentSubmissions);
 router.post('/:id/submit', protect, authorize('STUDENT'), submitAssignment);
 router.get('/:id/my-submission', protect, authorize('STUDENT'), getMySubmission);
+router.put('/submission/:submissionId/grade', protect, authorize('INSTRUCTOR', 'ADMIN'), gradeSubmission);
 
 export default router;

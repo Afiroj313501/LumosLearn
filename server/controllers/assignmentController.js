@@ -127,4 +127,36 @@ export const deleteAssignment = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete assignment' });
   }
+
+  
+};
+
+export const gradeSubmission = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const { grade, feedback } = req.body;
+
+    const submission = await prisma.assignmentSubmission.findUnique({
+      where: { id: submissionId },
+      include: { assignment: { include: { course: true } } },
+    });
+    if (!submission) return res.status(404).json({ error: 'Submission not found' });
+
+    if (
+      submission.assignment.course.instructorId !== req.user.userId &&
+      req.user.role !== 'ADMIN'
+    ) {
+      return res.status(403).json({ error: 'Not authorized to grade this submission' });
+    }
+
+    const updated = await prisma.assignmentSubmission.update({
+      where: { id: submissionId },
+      data: { grade: grade ?? null, feedback: feedback ?? null },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to grade submission' });
+  }
 };
