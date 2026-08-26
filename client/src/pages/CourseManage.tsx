@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
@@ -8,6 +8,7 @@ import {
   createAssignment,
   deleteAssignment,
   getAssignmentSubmissions,
+  gradeSubmission,
 } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
 import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi } from '../api/quizzes';
@@ -43,6 +44,8 @@ const CourseManage = () => {
   ]);
   const [quizError, setQuizError] = useState('');
   const [quizSubmitting, setQuizSubmitting] = useState(false);
+  const [gradeInputs, setGradeInputs] = useState<Record<string, { grade: string; feedback: string }>>({});
+  const [gradingId, setGradingId] = useState<string | null>(null);
 
   const loadQuizzes = async (lessonList: Lesson[]) => {
     const results: Record<string, Quiz | null> = {};
@@ -221,6 +224,25 @@ const CourseManage = () => {
       setQuizzesByLesson({ ...quizzesByLesson, [lessonId]: null });
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleGrade = async (submissionId: string) => {
+    const input = gradeInputs[submissionId];
+    if (!input) return;
+    setGradingId(submissionId);
+    try {
+      const updated = await gradeSubmission(submissionId, {
+        grade: input.grade ? parseFloat(input.grade) : undefined,
+        feedback: input.feedback || undefined,
+      });
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === submissionId ? updated.data : s))
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGradingId(null);
     }
   };
 
@@ -464,17 +486,63 @@ const CourseManage = () => {
                   {submissions.length === 0 ? (
                     <p className="dash-empty">No submissions yet.</p>
                   ) : (
-                    submissions.map((s) => (
-                      <div className="submission-row" key={s.id}>
-                        <span>{s.student?.name}</span>
-                        <a href={`${API_ORIGIN}${s.fileUrl}`} target="_blank" rel="noreferrer">
-                          {s.fileName}
-                        </a>
-                        <span className="submission-date">
-                          {new Date(s.submittedAt).toLocaleString()}
-                        </span>
-                      </div>
-                    ))
+                    submissions.map((s) => {
+                      const current = gradeInputs[s.id] || {
+                        grade: s.grade != null ? String(s.grade) : '',
+                        feedback: s.feedback || '',
+                      };
+                      return (
+                        <div className="submission-row-full" key={s.id}>
+                          <div className="submission-row">
+                            <span>{s.student?.name}</span>
+                            <a href={`${API_ORIGIN}${s.fileUrl}`} target="_blank" rel="noreferrer">
+                              {s.fileName}
+                            </a>
+                            <span className="submission-date">
+                              {new Date(s.submittedAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="grading-row">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              placeholder="Grade"
+                              className="grade-input"
+                              value={current.grade}
+                              onChange={(e) =>
+                                setGradeInputs({
+                                  ...gradeInputs,
+                                  [s.id]: { ...current, grade: e.target.value },
+                                })
+                              }
+                            />
+                            <input
+                              type="text"
+                              placeholder="Feedback (optional)"
+                              className="feedback-input"
+                              value={current.feedback}
+                              onChange={(e) =>
+                                setGradeInputs({
+                                  ...gradeInputs,
+                                  [s.id]: { ...current, feedback: e.target.value },
+                                })
+                              }
+                            />
+                            <button
+                              className="btn-outline-small"
+                              onClick={() => handleGrade(s.id)}
+                              disabled={gradingId === s.id}
+                            >
+                              {gradingId === s.id ? 'Saving...' : s.grade != null ? 'Update' : 'Save grade'}
+                            </button>
+                          </div>
+                          {s.grade != null && (
+                            <span className="graded-tag">Graded: {s.grade}%</span>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}

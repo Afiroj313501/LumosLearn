@@ -363,18 +363,23 @@ const CourseDetail = () => {
                   )}
 
                   {user?.role === 'STUDENT' && canView && (
-                    mySub ? (
+                                        mySub ? (
                       <div style={{ marginTop: '10px' }}>
                         <span className="file-download-link">
                           Submitted: {mySub.fileName}
                         </span>
                         {mySub.grade != null && (
                           <p style={{ fontSize: '13px', color: 'var(--accent-lumen)', marginTop: '8px' }}>
-                            Grade: {mySub.grade}
+                            Grade: {mySub.grade}%
+                          </p>
+                        )}
+                        {mySub.feedback && (
+                          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            Feedback: {mySub.feedback}
                           </p>
                         )}
                       </div>
-                    ) : (
+                      ) : (
                       <label className="file-input-label" style={{ marginTop: '10px' }}>
                         {uploadingFor === a.id ? 'Uploading...' : 'Upload your submission'}
                         <input

@@ -36,3 +36,6 @@ export const submitAssignment = (id: string, data: { fileUrl: string; fileName: 
 
 export const getMySubmission = (id: string) =>
   api.get<Submission | null>(`/assignments/${id}/my-submission`);
+
+export const gradeSubmission = (submissionId: string, data: { grade?: number; feedback?: string }) =>
+  api.put<Submission>(`/assignments/submission/${submissionId}/grade`, data);
