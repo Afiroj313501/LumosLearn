@@ -11,6 +11,8 @@ import { uploadFile } from '../api/upload';
 import { markLessonComplete, unmarkLessonComplete, getCourseProgress } from '../api/progress';
 import { getQuizByLesson, submitQuiz, getMyQuizSubmission } from '../api/quizzes';
 import type { Quiz, QuizSubmission } from '../api/quizzes';
+import { issueCertificate, getMyCertificate } from '../api/certificate';
+import type { Certificate } from '../api/certificate';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -43,6 +45,9 @@ const CourseDetail = () => {
   const [submittingQuiz, setSubmittingQuiz] = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<Record<string, { score: number; correctCount: number; total: number }>>({});
 
+  const [certificate, setCertificate] = useState<Certificate | null>(null);
+  const [issuingCert, setIssuingCert] = useState(false);
+
   const loadData = async () => {
     if (!courseId) return;
     try {
@@ -61,6 +66,9 @@ const CourseDetail = () => {
           setCompletedLessonIds(ids);
           const total = courseRes.data.lessons?.length || 0;
           setProgressPct(total > 0 ? (ids.size / total) * 100 : 0);
+
+          const certRes = await getMyCertificate(courseId);
+          setCertificate(certRes.data);
         }
       }
 
@@ -172,6 +180,18 @@ const CourseDetail = () => {
       setSubmittingQuiz(null);
     }
   };
+  const handleGetCertificate = async () => {
+    if (!courseId) return;
+    setIssuingCert(true);
+    try {
+      const res = await issueCertificate(courseId);
+      setCertificate(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIssuingCert(false);
+    }
+  };
 
   if (loading) return <div className="course-detail"><p className="dash-empty">Loading...</p></div>;
   if (!course) return <div className="course-detail"><p className="dash-empty">Course not found.</p></div>;
@@ -203,6 +223,29 @@ const CourseDetail = () => {
             <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
           </div>
           <span className="progress-label">{Math.round(progressPct)}% complete</span>
+
+          {progressPct >= 100 && (
+            certificate ? (
+              <a
+                href={`${API_ORIGIN}${certificate.fileUrl}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-solid"
+                style={{ display: 'inline-block', marginTop: '12px', textDecoration: 'none' }}
+              >
+                Download certificate
+              </a>
+            ) : (
+              <button
+                className="btn-solid"
+                style={{ marginTop: '12px' }}
+                onClick={handleGetCertificate}
+                disabled={issuingCert}
+              >
+                {issuingCert ? 'Generating...' : 'Get certificate'}
+              </button>
+            )
+          )}
         </div>
       )}
 
