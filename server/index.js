@@ -27,6 +27,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/quizzes', quizRoutes);
+
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
 });
