@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getLessonsByCourse, createLesson, deleteLesson } from '../api/lessons';
+import { getLessonsByCourse, createLesson, updateLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
 import { uploadFile } from '../api/upload';
 import {
@@ -49,6 +49,12 @@ const CourseManage = () => {
 
   const [generatingAIFor, setGeneratingAIFor] = useState<string | null>(null);
   const [aiError, setAiError] = useState('');
+
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({ title: '', content: '', videoUrl: '' });
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const loadQuizzes = async (lessonList: Lesson[]) => {
     const results: Record<string, Quiz | null> = {};
@@ -130,6 +136,50 @@ const CourseManage = () => {
       loadLessons();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleStartEdit = (lesson: Lesson) => {
+    setEditingLessonId(lesson.id);
+    setEditFormData({
+      title: lesson.title,
+      content: lesson.content,
+      videoUrl: lesson.videoUrl || '',
+    });
+    setEditFile(null);
+    setEditError('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLessonId(null);
+    setEditFile(null);
+    setEditError('');
+  };
+
+  const handleSaveEdit = async (lessonId: string) => {
+    setEditError('');
+    setEditSubmitting(true);
+    try {
+      let fileUrl: string | undefined;
+      let fileName: string | undefined;
+
+      if (editFile) {
+        const uploadRes = await uploadFile(editFile);
+        fileUrl = uploadRes.data.fileUrl;
+        fileName = uploadRes.data.fileName;
+      }
+
+      await updateLesson(lessonId, {
+        ...editFormData,
+        ...(fileUrl ? { fileUrl, fileName } : {}),
+      });
+      setEditingLessonId(null);
+      setEditFile(null);
+      loadLessons();
+    } catch (err: any) {
+      setEditError(err.response?.data?.error || 'Failed to update lesson');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -330,35 +380,81 @@ const CourseManage = () => {
 
             return (
               <div key={l.id}>
-                <div className="lesson-item">
-                  <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
-                  <div className="lesson-body">
-                    <h3>{l.title}</h3>
-                    <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '...' : ''}</p>
-                    <div className="lesson-tags">
-                      {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
-                      {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
-                      {quiz && <span className="lesson-video-tag">Has quiz ({quiz.questions.length} Qs)</span>}
+                {editingLessonId === l.id ? (
+                  <div className="lesson-form" style={{ margin: '0 0 16px' }}>
+                    {editError && <p className="form-error">{editError}</p>}
+                    <input
+                      placeholder="Lesson title"
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                    />
+                    <textarea
+                      placeholder="Lesson content"
+                      value={editFormData.content}
+                      onChange={(e) => setEditFormData({ ...editFormData, content: e.target.value })}
+                      rows={5}
+                    />
+                    <input
+                      placeholder="Video URL (optional)"
+                      value={editFormData.videoUrl}
+                      onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })}
+                    />
+                    <label className="file-input-label">
+                      {l.fileUrl ? `Replace file (current: ${l.fileName})` : 'Attach file (optional)'}
+                      <input
+                        type="file"
+                        accept=".pdf,.ppt,.pptx,.doc,.docx"
+                        onChange={(e) => setEditFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    {editFile && <span className="file-selected">Selected: {editFile.name}</span>}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        className="btn-solid"
+                        onClick={() => handleSaveEdit(l.id)}
+                        disabled={editSubmitting}
+                      >
+                        {editSubmitting ? 'Saving...' : 'Save changes'}
+                      </button>
+                      <button className="btn-outline-small" onClick={handleCancelEdit}>
+                        Cancel
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {quiz ? (
-                      <button className="btn-danger" onClick={() => handleDeleteQuiz(quiz.id, l.id)}>
-                        Delete quiz
+                ) : (
+                  <div className="lesson-item">
+                    <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
+                    <div className="lesson-body">
+                      <h3>{l.title}</h3>
+                      <p>{l.content.slice(0, 140)}{l.content.length > 140 ? '...' : ''}</p>
+                      <div className="lesson-tags">
+                        {l.videoUrl && <span className="lesson-video-tag">Has video</span>}
+                        {l.fileUrl && <span className="lesson-file-tag">{l.fileName}</span>}
+                        {quiz && <span className="lesson-video-tag">Has quiz ({quiz.questions.length} Qs)</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button className="btn-outline-small" onClick={() => handleStartEdit(l)}>
+                        Edit
                       </button>
-                    ) : (
-                      <button
-                        className="btn-outline-small"
-                        onClick={() => setBuildingQuizFor(isBuildingQuiz ? null : l.id)}
-                      >
-                        {isBuildingQuiz ? 'Cancel' : '+ Add quiz'}
+                      {quiz ? (
+                        <button className="btn-danger" onClick={() => handleDeleteQuiz(quiz.id, l.id)}>
+                          Delete quiz
+                        </button>
+                      ) : (
+                        <button
+                          className="btn-outline-small"
+                          onClick={() => setBuildingQuizFor(isBuildingQuiz ? null : l.id)}
+                        >
+                          {isBuildingQuiz ? 'Cancel' : '+ Add quiz'}
+                        </button>
+                      )}
+                      <button className="btn-danger" onClick={() => handleDelete(l.id)}>
+                        Delete lesson
                       </button>
-                    )}
-                    <button className="btn-danger" onClick={() => handleDelete(l.id)}>
-                      Delete lesson
-                    </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {isBuildingQuiz && (
                   <div className="quiz-builder">

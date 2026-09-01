@@ -12,6 +12,7 @@ import assignmentRoutes from './routes/assignmentRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/certificates', express.static('certificates'));
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });

@@ -14,6 +14,7 @@ import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
 import { summarizeLesson } from '../api/lessons';
+import StudyAssistant from '../components/StudyAssistant';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -539,6 +540,10 @@ const CourseDetail = () => {
             })}
           </div>
         </>
+      )}
+
+      {courseId && (enrolled || user?.role !== 'STUDENT') && (
+        <StudyAssistant courseId={courseId} />
       )}
     </div>
   );
