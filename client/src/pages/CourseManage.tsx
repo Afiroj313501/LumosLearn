@@ -11,8 +11,8 @@ import {
   gradeSubmission,
 } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
-import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizAI } from '../api/quizzes';
-import type { Quiz, QuizQuestion } from '../api/quizzes';
+import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizAI, getQuizResults } from '../api/quizzes';
+import type { Quiz, QuizQuestion, QuizResultRow } from '../api/quizzes';
 import { API_ORIGIN } from '../api/config';
 import './CourseManage.css';
 
@@ -49,6 +49,9 @@ const CourseManage = () => {
 
   const [generatingAIFor, setGeneratingAIFor] = useState<string | null>(null);
   const [aiError, setAiError] = useState('');
+
+  const [viewingResultsFor, setViewingResultsFor] = useState<string | null>(null);
+  const [quizResults, setQuizResults] = useState<QuizResultRow[]>([]);
 
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState({ title: '', content: '', videoUrl: '' });
@@ -316,6 +319,20 @@ const CourseManage = () => {
     }
   };
 
+  const handleViewQuizResults = async (quizId: string) => {
+    if (viewingResultsFor === quizId) {
+      setViewingResultsFor(null);
+      return;
+    }
+    try {
+      const res = await getQuizResults(quizId);
+      setQuizResults(res.data);
+      setViewingResultsFor(quizId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="course-manage">
       <button className="btn-back" onClick={() => navigate('/instructor')}>
@@ -438,9 +455,14 @@ const CourseManage = () => {
                         Edit
                       </button>
                       {quiz ? (
-                        <button className="btn-danger" onClick={() => handleDeleteQuiz(quiz.id, l.id)}>
-                          Delete quiz
-                        </button>
+                        <>
+                          <button className="btn-outline-small" onClick={() => handleViewQuizResults(quiz.id)}>
+                            {viewingResultsFor === quiz.id ? 'Hide' : 'View'} results
+                          </button>
+                          <button className="btn-danger" onClick={() => handleDeleteQuiz(quiz.id, l.id)}>
+                            Delete quiz
+                          </button>
+                        </>
                       ) : (
                         <button
                           className="btn-outline-small"
@@ -534,6 +556,26 @@ const CourseManage = () => {
                     >
                       {quizSubmitting ? 'Saving...' : 'Save quiz'}
                     </button>
+                  </div>
+                )}
+
+                {quiz && viewingResultsFor === quiz.id && (
+                  <div className="submissions-panel">
+                    {quizResults.length === 0 ? (
+                      <p className="dash-empty">No submissions yet.</p>
+                    ) : (
+                      quizResults.map((r) => (
+                        <div className="submission-row" key={r.id}>
+                          <span>{r.student.name}</span>
+                          <span style={{ color: 'var(--accent-lumen)', fontWeight: 700 }}>
+                            {Math.round(r.score)}%
+                          </span>
+                          <span className="submission-date">
+                            {new Date(r.submittedAt).toLocaleString()}
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

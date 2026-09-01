@@ -52,3 +52,13 @@ export const generateQuizAI = (lessonId: string, numQuestions?: number) =>
 
 export const getQuizReview = (quizId: string) =>
   api.get<{ score: number; review: QuizReviewItem[] }>(`/quizzes/${quizId}/review`);
+
+export interface QuizResultRow {
+  id: string;
+  score: number;
+  submittedAt: string;
+  student: { name: string; email: string };
+}
+
+export const getQuizResults = (quizId: string) =>
+  api.get<QuizResultRow[]>(`/quizzes/${quizId}/results`);

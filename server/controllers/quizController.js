@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js';
 import { generateQuizFromContent } from '../services/aiService.js';
+import { extractTextFromFile } from '../services/fileTextService.js';
+
 export const createQuiz = async (req, res) => {
   try {
     const { lessonId } = req.params;
@@ -146,7 +148,6 @@ export const getMyQuizSubmission = async (req, res) => {
   }
 };
 
-
 export const generateQuizAI = async (req, res) => {
   try {
     const { lessonId } = req.params;
@@ -162,6 +163,13 @@ export const generateQuizAI = async (req, res) => {
     }
 
     let sourceText = lesson.content || '';
+
+    if (lesson.fileUrl) {
+      const fileText = await extractTextFromFile(lesson.fileUrl);
+      if (fileText) {
+        sourceText = `${sourceText}\n\n${fileText}`.trim();
+      }
+    }
 
     if (!sourceText || sourceText.trim().length < 50) {
       return res.status(400).json({ error: 'Not enough content (text or file) to generate a quiz from' });
@@ -209,5 +217,32 @@ export const getQuizReview = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch quiz review' });
+  }
+};
+
+export const getQuizResults = async (req, res) => {
+  try {
+    const { id: quizId } = req.params;
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: { lesson: { include: { course: true } } },
+    });
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    if (quiz.lesson.course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized to view results for this quiz' });
+    }
+
+    const submissions = await prisma.submission.findMany({
+      where: { quizId },
+      include: { student: { select: { name: true, email: true } } },
+      orderBy: { score: 'desc' },
+    });
+
+    res.json(submissions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch quiz results' });
   }
 };

@@ -7,6 +7,7 @@ import {
   getMyQuizSubmission,
   generateQuizAI,
   getQuizReview,
+  getQuizResults,
 } from '../controllers/quizController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -19,5 +20,6 @@ router.post('/:id/submit', protect, authorize('STUDENT'), submitQuiz);
 router.get('/:id/my-submission', protect, authorize('STUDENT'), getMyQuizSubmission);
 router.post('/lesson/:lessonId/generate', protect, authorize('INSTRUCTOR', 'ADMIN'), generateQuizAI);
 router.get('/:id/review', protect, authorize('STUDENT'), getQuizReview);
+router.get('/:id/results', protect, authorize('INSTRUCTOR', 'ADMIN'), getQuizResults);
 
 export default router;
