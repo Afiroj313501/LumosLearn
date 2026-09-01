@@ -84,3 +84,27 @@ Assistant:`;
   const text = await generateWithFallback(prompt);
   return text.trim();
 }
+
+export async function recommendCourses(studentContext, availableCourses) {
+  const prompt = `You are a course recommendation assistant for a learning platform.
+
+Student's enrollment/progress history:
+"""
+${studentContext}
+"""
+
+Available courses the student is NOT yet enrolled in:
+"""
+${availableCourses.map((c) => `- ID: ${c.id} | Title: ${c.title} | Category: ${c.category || 'General'} | Description: ${c.description}`).join('\n')}
+"""
+
+Based on the student's history, pick the 3 most relevant courses from the available list above.
+Return ONLY valid JSON (no markdown, no code fences) in this exact shape:
+[
+  { "id": "course id from the list", "reason": "one short sentence explaining why this fits the student" }
+]`;
+
+  const text = await generateWithFallback(prompt);
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(cleaned);
+}

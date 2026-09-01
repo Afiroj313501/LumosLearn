@@ -4,6 +4,8 @@ import { getAllCourses } from '../api/courses';
 import type { Course } from '../api/courses';
 import { getMyEnrollments } from '../api/enrollments';
 import type { Enrollment } from '../api/enrollments';
+import { getRecommendations } from '../api/ai';
+import type { RecommendedCourse } from '../api/ai';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -12,6 +14,7 @@ const StudentDashboard = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -22,6 +25,13 @@ const StudentDashboard = () => {
       ]);
       setCourses(coursesRes.data);
       setEnrollments(enrollmentsRes.data);
+
+      try {
+        const recRes = await getRecommendations();
+        setRecommendations(recRes.data.recommendations);
+      } catch (recErr) {
+        console.error(recErr);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -59,6 +69,22 @@ const StudentDashboard = () => {
           Browse courses
         </button>
       </div>
+
+      {recommendations.length > 0 && (
+        <div className="recommendations-section">
+          <p className="dash-eyebrow" style={{ marginBottom: '12px' }}>Recommended for you</p>
+          <div className="course-grid">
+            {recommendations.map((r) => (
+              <div className="course-card" key={r.id} onClick={() => navigate(`/course/${r.id}`)}>
+                <span className="course-category">{r.category || 'General'}</span>
+                <h3>{r.title}</h3>
+                <p className="course-desc">{r.description}</p>
+                <p className="ai-reason">{r.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="dash-empty">Loading…</p>
