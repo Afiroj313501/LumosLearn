@@ -1,7 +1,22 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+const primaryModel = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+async function generateWithFallback(prompt) {
+  try {
+    const result = await primaryModel.generateContent(prompt);
+    return result.response.text();
+  } catch (err) {
+    if (err?.status === 503) {
+      console.warn('Primary model overloaded, retrying with fallback model...');
+      const result = await fallbackModel.generateContent(prompt);
+      return result.response.text();
+    }
+    throw err;
+  }
+}
 
 export async function generateQuizFromContent(lessonContent, numQuestions = 5) {
   const prompt = `You are an assistant that creates quizzes for a learning management system.
@@ -22,8 +37,7 @@ Lesson content:
 ${lessonContent}
 """`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  const text = await generateWithFallback(prompt);
   const cleaned = text.replace(/```json|```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -36,8 +50,8 @@ Lesson content:
 ${lessonContent}
 """`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  const text = await generateWithFallback(prompt);
+  return text.trim();
 }
 
 export async function generateCourseOutline(topic, numModules = 5) {
@@ -48,8 +62,7 @@ Return ONLY valid JSON (no markdown, no code fences) in this exact shape:
 ]
 Generate exactly ${numModules} modules, in a logical learning order.`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  const text = await generateWithFallback(prompt);
   const cleaned = text.replace(/```json|```/g, '').trim();
   return JSON.parse(cleaned);
 }
@@ -68,6 +81,6 @@ ${conversationHistory.map((m) => `${m.role}: ${m.content}`).join('\n')}
 Student: ${userMessage}
 Assistant:`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  const text = await generateWithFallback(prompt);
+  return text.trim();
 }
