@@ -11,7 +11,7 @@ import {
   gradeSubmission,
 } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
-import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi } from '../api/quizzes';
+import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizAI } from '../api/quizzes';
 import type { Quiz, QuizQuestion } from '../api/quizzes';
 import { API_ORIGIN } from '../api/config';
 import './CourseManage.css';
@@ -46,6 +46,9 @@ const CourseManage = () => {
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [gradeInputs, setGradeInputs] = useState<Record<string, { grade: string; feedback: string }>>({});
   const [gradingId, setGradingId] = useState<string | null>(null);
+
+  const [generatingAIFor, setGeneratingAIFor] = useState<string | null>(null);
+  const [aiError, setAiError] = useState('');
 
   const loadQuizzes = async (lessonList: Lesson[]) => {
     const results: Record<string, Quiz | null> = {};
@@ -246,6 +249,23 @@ const CourseManage = () => {
     }
   };
 
+  const handleGenerateWithAI = async (lessonId: string) => {
+    setAiError('');
+    setGeneratingAIFor(lessonId);
+    try {
+      const res = await generateQuizAI(lessonId, 5);
+      setQuizQuestions(res.data.questions);
+      if (!quizTitle.trim()) {
+        const lesson = lessons.find((l) => l.id === lessonId);
+        setQuizTitle(lesson ? `${lesson.title} Quiz` : 'AI Generated Quiz');
+      }
+    } catch (err: any) {
+      setAiError(err.response?.data?.error || 'AI generation failed');
+    } finally {
+      setGeneratingAIFor(null);
+    }
+  };
+
   return (
     <div className="course-manage">
       <button className="btn-back" onClick={() => navigate('/instructor')}>
@@ -343,11 +363,20 @@ const CourseManage = () => {
                 {isBuildingQuiz && (
                   <div className="quiz-builder">
                     {quizError && <p className="form-error">{quizError}</p>}
+                    {aiError && <p className="form-error">{aiError}</p>}
                     <input
                       placeholder="Quiz title"
                       value={quizTitle}
                       onChange={(e) => setQuizTitle(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      className="btn-ai-generate"
+                      onClick={() => handleGenerateWithAI(l.id)}
+                      disabled={generatingAIFor === l.id}
+                    >
+                      {generatingAIFor === l.id ? 'Generating with AI...' : 'Generate questions with AI'}
+                    </button>
 
                     {quizQuestions.map((q, qIdx) => (
                       <div className="quiz-question-block" key={qIdx}>

@@ -35,3 +35,6 @@ export const submitQuiz = (id: string, answers: Record<string, string>) =>
 
 export const getMyQuizSubmission = (id: string) =>
   api.get<QuizSubmission | null>(`/quizzes/${id}/my-submission`);
+
+export const generateQuizAI = (lessonId: string, numQuestions?: number) =>
+  api.post<{ questions: QuizQuestion[] }>(`/quizzes/lesson/${lessonId}/generate`, { numQuestions });

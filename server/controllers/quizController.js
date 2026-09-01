@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
-
+import { generateQuizFromContent } from '../services/aiService.js';
+import { extractTextFromPDF } from '../services/pdfService.js';
 export const createQuiz = async (req, res) => {
   try {
     const { lessonId } = req.params;
@@ -143,5 +144,48 @@ export const getMyQuizSubmission = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch submission' });
+  }
+};
+
+
+export const generateQuizAI = async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const { numQuestions } = req.body;
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { course: true },
+    });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+    if (lesson.course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    let sourceText = lesson.content || '';
+
+    // If a PDF is attached, extract its text and use it too (or instead, if lesson text is thin)
+    if (lesson.fileUrl && lesson.fileUrl.toLowerCase().endsWith('.pdf')) {
+      try {
+        const pdfText = await extractTextFromPDF(lesson.fileUrl);
+        sourceText = `${sourceText}\n\n${pdfText}`.trim();
+      } catch (pdfErr) {
+        console.error('PDF extraction failed:', pdfErr);
+        // fall through and use whatever text content exists
+      }
+    }
+
+    if (!sourceText || sourceText.trim().length < 50) {
+      return res.status(400).json({ error: 'Not enough content (text or PDF) to generate a quiz from' });
+    }
+
+    // Gemini has input limits - truncate very long extracted text to stay safe
+    const truncated = sourceText.slice(0, 15000);
+
+    const questions = await generateQuizFromContent(truncated, numQuestions || 5);
+    res.json({ questions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate quiz with AI' });
   }
 };
