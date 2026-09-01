@@ -18,3 +18,6 @@ export const createLesson = (courseId: string, data: Partial<Lesson>) =>
   api.post<Lesson>(`/lessons/course/${courseId}`, data);
 
 export const deleteLesson = (id: string) => api.delete(`/lessons/${id}`);
+
+export const summarizeLesson = (lessonId: string) =>
+  api.get<{ summary: string }>(`/lessons/${lessonId}/summarize`);

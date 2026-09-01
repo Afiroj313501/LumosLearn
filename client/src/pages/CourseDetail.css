@@ -359,3 +359,49 @@
 .review-correct strong {
   color: var(--accent-lumen);
 }
+
+.btn-ai-generate {
+  background: linear-gradient(135deg, rgba(140,124,240,0.18), rgba(242,184,75,0.18));
+  border: 1px solid rgba(140,124,240,0.35);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 9px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all 0.2s;
+}
+.btn-ai-generate:hover {
+  border-color: var(--accent-violet);
+  background: linear-gradient(135deg, rgba(140,124,240,0.28), rgba(242,184,75,0.28));
+}
+.btn-ai-generate:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ai-summary-box {
+  background: rgba(140, 124, 240, 0.06);
+  border: 1px solid rgba(140, 124, 240, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.ai-summary-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-violet);
+  margin: 0 0 8px;
+}
+
+.ai-summary-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  margin: 0;
+}

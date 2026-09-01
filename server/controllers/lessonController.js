@@ -1,4 +1,6 @@
 import prisma from '../config/prisma.js';
+import { summarizeLesson } from '../services/aiService.js';
+import { extractTextFromFile } from '../services/fileTextService.js';
 
 export const createLesson = async (req, res) => {
   try {
@@ -86,5 +88,49 @@ export const deleteLesson = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete lesson' });
+  }
+};
+
+export const summarizeLessonAI = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id },
+      include: { course: true },
+    });
+    if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+
+    if (req.user.role === 'STUDENT') {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { studentId_courseId: { studentId: req.user.userId, courseId: lesson.courseId } },
+      });
+      if (!enrollment) return res.status(403).json({ error: 'You are not enrolled in this course' });
+    } else if (
+      lesson.course.instructorId !== req.user.userId &&
+      req.user.role !== 'ADMIN'
+    ) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    let sourceText = lesson.content || '';
+
+    if (lesson.fileUrl) {
+      const fileText = await extractTextFromFile(lesson.fileUrl);
+      if (fileText) {
+        sourceText = `${sourceText}\n\n${fileText}`.trim();
+      }
+    }
+
+    if (!sourceText || sourceText.trim().length < 50) {
+      return res.status(400).json({ error: 'Not enough content (text or file) to summarize' });
+    }
+
+    const truncated = sourceText.slice(0, 15000);
+    const summary = await summarizeLesson(truncated);
+    res.json({ summary });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate summary' });
   }
 };

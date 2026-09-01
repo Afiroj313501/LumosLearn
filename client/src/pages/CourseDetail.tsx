@@ -13,6 +13,7 @@ import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview } from 
 import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
+import { summarizeLesson } from '../api/lessons';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -49,6 +50,10 @@ const CourseDetail = () => {
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [issuingCert, setIssuingCert] = useState(false);
+
+  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState('');
 
   const loadData = async () => {
     if (!courseId) return;
@@ -213,6 +218,19 @@ const CourseDetail = () => {
     }
   };
 
+  const handleSummarize = async (lessonId: string) => {
+    setSummaryError('');
+    setSummarizingId(lessonId);
+    try {
+      const res = await summarizeLesson(lessonId);
+      setSummaries((prev) => ({ ...prev, [lessonId]: res.data.summary }));
+    } catch (err: any) {
+      setSummaryError(err.response?.data?.error || 'Failed to generate summary');
+    } finally {
+      setSummarizingId(null);
+    }
+  };
+
   if (loading) return <div className="course-detail"><p className="dash-empty">Loading...</p></div>;
   if (!course) return <div className="course-detail"><p className="dash-empty">Course not found.</p></div>;
 
@@ -294,7 +312,27 @@ const CourseDetail = () => {
                   <div className="lesson-content-panel">
                     <p className="lesson-text">{l.content}</p>
 
-                    {l.videoUrl && (
+                    <button
+                      className="btn-ai-generate"
+                      onClick={() => handleSummarize(l.id)}
+                      disabled={summarizingId === l.id}
+                    >
+                      {summarizingId === l.id ? 'Summarizing...' : summaries[l.id] ? 'Regenerate summary' : 'Summarize with AI'}
+                    </button>
+
+                    {summaryError && summarizingId === null && !summaries[l.id] && (
+                      <p className="form-error">{summaryError}</p>
+                    )}
+
+                    {summaries[l.id] && (
+                      <div className="ai-summary-box">
+                        <p className="ai-summary-label">AI Summary</p>
+                        <p className="ai-summary-text">{summaries[l.id]}</p>
+                      </div>
+                    )}
+
+                  {l.videoUrl && (
+
                       embedUrl ? (
                         <div className="video-embed-wrap">
                           <iframe
