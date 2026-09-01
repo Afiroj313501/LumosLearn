@@ -9,8 +9,8 @@ import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../ap
 import type { Assignment, Submission } from '../api/assignments';
 import { uploadFile } from '../api/upload';
 import { markLessonComplete, unmarkLessonComplete, getCourseProgress } from '../api/progress';
-import { getQuizByLesson, submitQuiz, getMyQuizSubmission } from '../api/quizzes';
-import type { Quiz, QuizSubmission } from '../api/quizzes';
+import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview } from '../api/quizzes';
+import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
 import './CourseDetail.css';
@@ -44,6 +44,8 @@ const CourseDetail = () => {
   const [quizAnswers, setQuizAnswers] = useState<Record<string, Record<string, string>>>({});
   const [submittingQuiz, setSubmittingQuiz] = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<Record<string, { score: number; correctCount: number; total: number }>>({});
+  const [quizReviews, setQuizReviews] = useState<Record<string, QuizReviewItem[]>>({});
+  const [showingReviewFor, setShowingReviewFor] = useState<string | null>(null);
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [issuingCert, setIssuingCert] = useState(false);
@@ -180,6 +182,24 @@ const CourseDetail = () => {
       setSubmittingQuiz(null);
     }
   };
+
+  const handleToggleReview = async (quizId: string) => {
+    if (showingReviewFor === quizId) {
+      setShowingReviewFor(null);
+      return;
+    }
+    if (!quizReviews[quizId]) {
+      try {
+        const res = await getQuizReview(quizId);
+        setQuizReviews((prev) => ({ ...prev, [quizId]: res.data.review }));
+      } catch (err) {
+        console.error(err);
+        return;
+      }
+    }
+    setShowingReviewFor(quizId);
+  };
+
   const handleGetCertificate = async () => {
     if (!courseId) return;
     setIssuingCert(true);
@@ -326,6 +346,26 @@ const CourseDetail = () => {
                         ) : quizSubmissions[quiz.id] ? (
                           <div className="quiz-result">
                             <p>You scored <strong>{Math.round(quizSubmissions[quiz.id]!.score)}%</strong> on this quiz.</p>
+                            <button className="btn-outline-small" onClick={() => handleToggleReview(quiz.id)}>
+                              {showingReviewFor === quiz.id ? 'Hide review' : 'Review answers'}
+                            </button>
+                            {showingReviewFor === quiz.id && quizReviews[quiz.id] && (
+                              <div className="quiz-review">
+                                {quizReviews[quiz.id].map((r, rIdx) => (
+                                  <div className={r.isCorrect ? 'review-item correct' : 'review-item incorrect'} key={r.id}>
+                                    <p className="review-question">{rIdx + 1}. {r.text}</p>
+                                    <p className="review-answer">
+                                      Your answer: <strong>{r.studentAnswer || '(no answer)'}</strong>
+                                    </p>
+                                    {!r.isCorrect && (
+                                      <p className="review-correct">
+                                        Correct answer: <strong>{r.correctAnswer}</strong>
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ) : quizResult[quiz.id] ? (
                           <div className="quiz-result">
@@ -333,6 +373,26 @@ const CourseDetail = () => {
                               You got <strong>{quizResult[quiz.id].correctCount}/{quizResult[quiz.id].total}</strong> correct
                               ({Math.round(quizResult[quiz.id].score)}%).
                             </p>
+                            <button className="btn-outline-small" onClick={() => handleToggleReview(quiz.id)}>
+                              {showingReviewFor === quiz.id ? 'Hide review' : 'Review answers'}
+                            </button>
+                            {showingReviewFor === quiz.id && quizReviews[quiz.id] && (
+                              <div className="quiz-review">
+                                {quizReviews[quiz.id].map((r, rIdx) => (
+                                  <div className={r.isCorrect ? 'review-item correct' : 'review-item incorrect'} key={r.id}>
+                                    <p className="review-question">{rIdx + 1}. {r.text}</p>
+                                    <p className="review-answer">
+                                      Your answer: <strong>{r.studentAnswer || '(no answer)'}</strong>
+                                    </p>
+                                    {!r.isCorrect && (
+                                      <p className="review-correct">
+                                        Correct answer: <strong>{r.correctAnswer}</strong>
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="quiz-form">
@@ -406,7 +466,7 @@ const CourseDetail = () => {
                   )}
 
                   {user?.role === 'STUDENT' && canView && (
-                                        mySub ? (
+                    mySub ? (
                       <div style={{ marginTop: '10px' }}>
                         <span className="file-download-link">
                           Submitted: {mySub.fileName}
@@ -422,7 +482,7 @@ const CourseDetail = () => {
                           </p>
                         )}
                       </div>
-                      ) : (
+                    ) : (
                       <label className="file-input-label" style={{ marginTop: '10px' }}>
                         {uploadingFor === a.id ? 'Uploading...' : 'Upload your submission'}
                         <input

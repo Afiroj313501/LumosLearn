@@ -22,6 +22,17 @@ export interface QuizSubmission {
   submittedAt: string;
 }
 
+export interface QuizReviewItem {
+  id: string;
+  text: string;
+  type: 'MCQ' | 'SHORT_ANSWER';
+  options?: string[];
+  correctAnswer: string;
+  studentAnswer: string;
+  isCorrect: boolean;
+}
+
+
 export const getQuizByLesson = (lessonId: string) =>
   api.get<Quiz | null>(`/quizzes/lesson/${lessonId}`);
 
@@ -38,3 +49,6 @@ export const getMyQuizSubmission = (id: string) =>
 
 export const generateQuizAI = (lessonId: string, numQuestions?: number) =>
   api.post<{ questions: QuizQuestion[] }>(`/quizzes/lesson/${lessonId}/generate`, { numQuestions });
+
+export const getQuizReview = (quizId: string) =>
+  api.get<{ score: number; review: QuizReviewItem[] }>(`/quizzes/${quizId}/review`);

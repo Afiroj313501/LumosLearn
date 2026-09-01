@@ -476,6 +476,7 @@ const CourseManage = () => {
             Due date (optional)
             <input
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={assignFormData.dueDate}
               onChange={(e) => setAssignFormData({ ...assignFormData, dueDate: e.target.value })}
             />

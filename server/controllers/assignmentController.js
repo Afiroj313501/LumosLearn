@@ -9,6 +9,20 @@ export const createAssignment = async (req, res) => {
       return res.status(400).json({ error: 'Title and description are required' });
     }
 
+    if (dueDate) {
+      const selectedDueDate = new Date(`${dueDate}T00:00:00`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (Number.isNaN(selectedDueDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid due date' });
+      }
+
+      if (selectedDueDate < today) {
+        return res.status(400).json({ error: 'Due date cannot be in the past' });
+      }
+    }
+
     const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) return res.status(404).json({ error: 'Course not found' });
     if (course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
@@ -19,7 +33,7 @@ export const createAssignment = async (req, res) => {
       data: {
         title,
         description,
-        dueDate: dueDate ? new Date(dueDate) : null,
+        dueDate: dueDate ? new Date(`${dueDate}T00:00:00`) : null,
         fileUrl,
         fileName,
         courseId,

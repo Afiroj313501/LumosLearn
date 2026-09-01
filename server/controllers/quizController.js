@@ -189,3 +189,37 @@ export const generateQuizAI = async (req, res) => {
     res.status(500).json({ error: 'Failed to generate quiz with AI' });
   }
 };
+
+export const getQuizReview = async (req, res) => {
+  try {
+    const { id: quizId } = req.params;
+
+    const submission = await prisma.submission.findUnique({
+      where: { studentId_quizId: { studentId: req.user.userId, quizId } },
+    });
+    if (!submission) return res.status(404).json({ error: 'No submission found for this quiz' });
+
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: { questions: true },
+    });
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    const review = quiz.questions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      type: q.type,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      studentAnswer: submission.answers[q.id] || '',
+      isCorrect:
+        (submission.answers[q.id] || '').trim().toLowerCase() ===
+        q.correctAnswer.trim().toLowerCase(),
+    }));
+
+    res.json({ score: submission.score, review });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch quiz review' });
+  }
+};
