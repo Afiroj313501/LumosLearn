@@ -14,7 +14,7 @@ import quizRoutes from './routes/quizRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
-
+import adminRoutes from './routes/adminRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -34,6 +34,7 @@ app.use('/certificates', express.static('certificates'));
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/protected-test', protect, (req, res) => {
   res.json({ message: 'You are authenticated', user: req.user });
