@@ -150,3 +150,24 @@
   font-style: italic;
   margin: 6px 0 0;
 }
+
+.btn-ai-generate {
+  background: linear-gradient(135deg, rgba(140,124,240,0.18), rgba(242,184,75,0.18));
+  border: 1px solid rgba(140,124,240,0.35);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-ai-generate:hover {
+  border-color: var(--accent-violet);
+  background: linear-gradient(135deg, rgba(140,124,240,0.28), rgba(242,184,75,0.28));
+}
+.btn-ai-generate:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

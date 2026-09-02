@@ -60,16 +60,16 @@ const CourseManage = () => {
   const [editError, setEditError] = useState('');
 
   const loadQuizzes = async (lessonList: Lesson[]) => {
-    const results: Record<string, Quiz | null> = {};
-    for (const l of lessonList) {
-      try {
-        const res = await getQuizByLesson(l.id);
-        results[l.id] = res.data;
-      } catch (err) {
-        console.error(err);
-      }
+    try {
+      const responses = await Promise.all(lessonList.map((l) => getQuizByLesson(l.id)));
+      const results: Record<string, Quiz | null> = {};
+      lessonList.forEach((l, idx) => {
+        results[l.id] = responses[idx].data;
+      });
+      setQuizzesByLesson(results);
+    } catch (err) {
+      console.error(err);
     }
-    setQuizzesByLesson(results);
   };
 
   const loadLessons = async () => {

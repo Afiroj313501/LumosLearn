@@ -84,27 +84,38 @@ const CourseDetail = () => {
       setAssignments(assignRes.data);
 
       if (user?.role === 'STUDENT') {
+        const subResults = await Promise.all(
+          assignRes.data.map((a) => getMySubmission(a.id))
+        );
         const subs: Record<string, Submission | null> = {};
-        for (const a of assignRes.data) {
-          const subRes = await getMySubmission(a.id);
-          subs[a.id] = subRes.data;
-        }
+        assignRes.data.forEach((a, idx) => {
+          subs[a.id] = subResults[idx].data;
+        });
         setMySubmissions(subs);
       }
 
       if (courseRes.data.lessons) {
+        const quizResults = await Promise.all(
+          (courseRes.data.lessons as any[]).map((l) => getQuizByLesson(l.id))
+        );
+
         const quizzes: Record<string, Quiz | null> = {};
-        const qSubs: Record<string, QuizSubmission | null> = {};
-        for (const l of courseRes.data.lessons as any[]) {
-          const qRes = await getQuizByLesson(l.id);
-          quizzes[l.id] = qRes.data;
-          if (qRes.data && user?.role === 'STUDENT') {
-            const subRes = await getMyQuizSubmission(qRes.data.id);
-            qSubs[qRes.data.id] = subRes.data;
-          }
-        }
+        (courseRes.data.lessons as any[]).forEach((l, idx) => {
+          quizzes[l.id] = quizResults[idx].data;
+        });
         setQuizzesByLesson(quizzes);
-        setQuizSubmissions(qSubs);
+
+        if (user?.role === 'STUDENT') {
+          const quizzesWithData = quizResults.filter((r) => r.data);
+          const subResults = await Promise.all(
+            quizzesWithData.map((r) => getMyQuizSubmission(r.data!.id))
+          );
+          const qSubs: Record<string, QuizSubmission | null> = {};
+          quizzesWithData.forEach((r, idx) => {
+            qSubs[r.data!.id] = subResults[idx].data;
+          });
+          setQuizSubmissions(qSubs);
+        }
       }
     } catch (err) {
       console.error(err);

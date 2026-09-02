@@ -113,6 +113,9 @@ body {
 }
 
 .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   background: none;
   border: none;
   color: var(--text-primary);
@@ -127,6 +130,9 @@ body {
 .btn-ghost:hover { background: rgba(255,255,255,0.06); }
 
 .btn-solid {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   background: var(--accent-lumen);
   color: #1a1305;
   border: none;
@@ -144,6 +150,9 @@ body {
 }
 
 .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   background: transparent;
   border: 1px solid rgba(255,255,255,0.18);
   color: var(--text-primary);

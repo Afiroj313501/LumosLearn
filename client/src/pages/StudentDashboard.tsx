@@ -15,6 +15,8 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [recsFetched, setRecsFetched] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -25,17 +27,23 @@ const StudentDashboard = () => {
       ]);
       setCourses(coursesRes.data);
       setEnrollments(enrollmentsRes.data);
-
-      try {
-        const recRes = await getRecommendations();
-        setRecommendations(recRes.data.recommendations);
-      } catch (recErr) {
-        console.error(recErr);
-      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGetRecommendations = async () => {
+    setLoadingRecs(true);
+    try {
+      const recRes = await getRecommendations();
+      setRecommendations(recRes.data.recommendations);
+      setRecsFetched(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingRecs(false);
     }
   };
 
@@ -70,9 +78,15 @@ const StudentDashboard = () => {
         </button>
       </div>
 
-      {recommendations.length > 0 && (
-        <div className="recommendations-section">
-          <p className="dash-eyebrow" style={{ marginBottom: '12px' }}>Recommended for you</p>
+      <div className="recommendations-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <p className="dash-eyebrow" style={{ margin: 0 }}>Recommended for you</p>
+          <button className="btn-ai-generate" onClick={handleGetRecommendations} disabled={loadingRecs}>
+            {loadingRecs ? 'Thinking...' : recsFetched ? 'Refresh recommendations' : 'Get AI recommendations'}
+          </button>
+        </div>
+
+        {recommendations.length > 0 && (
           <div className="course-grid">
             {recommendations.map((r) => (
               <div className="course-card" key={r.id} onClick={() => navigate(`/course/${r.id}`)}>
@@ -83,8 +97,8 @@ const StudentDashboard = () => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {loading ? (
         <p className="dash-empty">Loading…</p>
