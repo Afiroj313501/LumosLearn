@@ -15,8 +15,8 @@ export interface Enrollment {
   };
 }
 
-export const enrollInCourse = (courseId: string) =>
-  api.post<Enrollment>('/enrollments', { courseId });
+export const enrollInCourse = (courseId: string, enrollmentPassword?: string) =>
+  api.post<Enrollment>('/enrollments', { courseId, enrollmentPassword });
 
 export const getMyEnrollments = () => api.get<Enrollment[]>('/enrollments/mine');
 

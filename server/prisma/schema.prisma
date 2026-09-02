@@ -24,6 +24,7 @@ model User {
   email        String   @unique
   password     String
   role         Role     @default(STUDENT)
+  approved     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -40,6 +41,7 @@ model Course {
   description  String
   category     String?
   thumbnailUrl String?
+  enrollmentPassword String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -2,11 +2,17 @@ import prisma from '../config/prisma.js';
 
 export const enrollInCourse = async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, enrollmentPassword } = req.body;
     if (!courseId) return res.status(400).json({ error: 'Course ID is required' });
 
     const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    if (course.enrollmentPassword) {
+      if (!enrollmentPassword || enrollmentPassword !== course.enrollmentPassword) {
+        return res.status(403).json({ error: 'Incorrect enrollment password' });
+      }
+    }
 
     const existing = await prisma.enrollment.findUnique({
       where: { studentId_courseId: { studentId: req.user.userId, courseId } },
@@ -38,7 +44,11 @@ export const getMyEnrollments = async (req, res) => {
       },
       orderBy: { enrolledAt: 'desc' },
     });
-    res.json(enrollments);
+    const sanitized = enrollments.map(({ course, ...enrollment }) => {
+      const { enrollmentPassword, ...sanitizedCourse } = course;
+      return { ...enrollment, course: sanitizedCourse };
+    });
+    res.json(sanitized);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch enrollments' });

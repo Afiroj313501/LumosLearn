@@ -105,3 +105,32 @@ export const getPlatformStats = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch platform stats' });
   }
 };
+
+export const getPendingInstructors = async (req, res) => {
+  try {
+    const pending = await prisma.user.findMany({
+      where: { role: 'INSTRUCTOR', approved: false },
+      select: { id: true, name: true, email: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json(pending);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch pending instructors' });
+  }
+};
+
+export const approveInstructor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { approved: true },
+      select: { id: true, name: true, email: true },
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to approve instructor' });
+  }
+};

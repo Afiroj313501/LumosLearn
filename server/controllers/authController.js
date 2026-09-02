@@ -16,15 +16,25 @@ export const signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const finalRole = role || 'STUDENT';
+    const needsApproval = finalRole === 'INSTRUCTOR';
 
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: role || 'STUDENT',
+        role: finalRole,
+        approved: !needsApproval,
       },
     });
+
+    if (needsApproval) {
+      return res.status(201).json({
+        pendingApproval: true,
+        message: 'Your instructor account has been created and is pending admin approval.',
+      });
+    }
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -58,6 +68,10 @@ export const login = async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!user.approved) {
+      return res.status(403).json({ error: 'Your instructor account is still pending admin approval.' });
     }
 
     const token = jwt.sign(

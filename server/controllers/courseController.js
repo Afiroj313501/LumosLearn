@@ -2,7 +2,7 @@ import prisma from '../config/prisma.js';
 
 export const createCourse = async (req, res) => {
   try {
-    const { title, description, category, thumbnailUrl } = req.body;
+    const { title, description, category, thumbnailUrl, enrollmentPassword } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({ error: 'Title and description are required' });
@@ -14,6 +14,7 @@ export const createCourse = async (req, res) => {
         description,
         category,
         thumbnailUrl,
+        enrollmentPassword: enrollmentPassword || null,
         instructorId: req.user.userId,
       },
     });
@@ -35,7 +36,8 @@ export const getMyCourses = async (req, res) => {
       },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(courses);
+    const sanitized = courses.map(({ enrollmentPassword, ...rest }) => rest);
+    res.json(sanitized);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch courses' });
@@ -68,7 +70,8 @@ export const getCourseById = async (req, res) => {
       },
     });
     if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.json(course);
+    const { enrollmentPassword, ...sanitized } = course;
+    res.json(sanitized);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch course' });
@@ -83,10 +86,10 @@ export const updateCourse = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to edit this course' });
     }
 
-    const { title, description, category, thumbnailUrl } = req.body;
+    const { title, description, category, thumbnailUrl, enrollmentPassword } = req.body;
     const updated = await prisma.course.update({
       where: { id: req.params.id },
-      data: { title, description, category, thumbnailUrl },
+      data: { title, description, category, thumbnailUrl, enrollmentPassword },
     });
     res.json(updated);
   } catch (err) {

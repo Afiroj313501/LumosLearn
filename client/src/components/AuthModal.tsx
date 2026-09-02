@@ -26,6 +26,7 @@ const AuthModal = ({ onClose }: AuthModalProps) => {
     role: 'STUDENT',
   });
   const [error, setError] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -36,6 +37,7 @@ const AuthModal = ({ onClose }: AuthModalProps) => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setPendingMessage('');
     setLoading(true);
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/signup';
@@ -43,6 +45,12 @@ const AuthModal = ({ onClose }: AuthModalProps) => {
         ? { email: formData.email, password: formData.password }
         : formData;
       const res = await api.post(endpoint, payload);
+
+      if (res.data.pendingApproval) {
+        setPendingMessage(res.data.message);
+        return;
+      }
+
       login(res.data.user, res.data.token);
       onClose();
     } catch (err: any) {
@@ -82,6 +90,7 @@ const AuthModal = ({ onClose }: AuthModalProps) => {
         </p>
 
         {error && <p className="modal-error">{error}</p>}
+  {pendingMessage && <p className="modal-pending">{pendingMessage}</p>}
 
         <form onSubmit={handleSubmit} className="modal-form">
           {mode === 'register' && (

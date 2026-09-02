@@ -31,6 +31,8 @@ const CourseDetail = () => {
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState('');
+  const [enrollPasswordInput, setEnrollPasswordInput] = useState('');
   const [openLessonId, setOpenLessonId] = useState<string | null>(null);
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -130,12 +132,13 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     if (!courseId) return;
+    setEnrollError('');
     setEnrolling(true);
     try {
-      await enrollInCourse(courseId);
+      await enrollInCourse(courseId, enrollPasswordInput || undefined);
       setEnrolled(true);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setEnrollError(err.response?.data?.error || 'Failed to enroll');
     } finally {
       setEnrolling(false);
     }
@@ -257,13 +260,34 @@ const CourseDetail = () => {
       <p className="course-instructor">by {course.instructor?.name}</p>
       <p className="course-desc-full">{course.description}</p>
 
-      {user?.role === 'STUDENT' && (
-        <button
-          className="btn-solid"
-          onClick={handleEnroll}
-          disabled={enrolled || enrolling}
-        >
-          {enrolled ? 'Enrolled' : enrolling ? 'Enrolling...' : 'Enroll in this course'}
+      {user?.role === 'STUDENT' && !enrolled && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+          {enrollError && <p className="form-error">{enrollError}</p>}
+          <input
+            type="password"
+            placeholder="Enrollment password (if required)"
+            value={enrollPasswordInput}
+            onChange={(e) => setEnrollPasswordInput(e.target.value)}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: '10px',
+              padding: '11px 14px',
+              fontFamily: 'Sora, sans-serif',
+              fontSize: '13.5px',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              maxWidth: '280px',
+            }}
+          />
+          <button className="btn-solid" onClick={handleEnroll} disabled={enrolling} style={{ width: 'fit-content' }}>
+            {enrolling ? 'Enrolling...' : 'Enroll in this course'}
+          </button>
+        </div>
+      )}
+      {user?.role === 'STUDENT' && enrolled && (
+        <button className="btn-solid" disabled style={{ marginBottom: '20px' }}>
+          Enrolled
         </button>
       )}
 

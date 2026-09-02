@@ -26,6 +26,13 @@ export interface PlatformStats {
   studentCount: number;
 }
 
+export interface PendingInstructor {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
 export const getPlatformStats = () => api.get<PlatformStats>('/admin/stats');
 export const getAllUsers = () => api.get<AdminUser[]>('/admin/users');
 export const updateUserRole = (id: string, role: string) =>
@@ -33,3 +40,5 @@ export const updateUserRole = (id: string, role: string) =>
 export const deleteUser = (id: string) => api.delete(`/admin/users/${id}`);
 export const getAllCoursesAdmin = () => api.get<AdminCourse[]>('/admin/courses');
 export const deleteCourseAdmin = (id: string) => api.delete(`/admin/courses/${id}`);
+export const getPendingInstructors = () => api.get<PendingInstructor[]>('/admin/pending-instructors');
+export const approveInstructor = (id: string) => api.put(`/admin/pending-instructors/${id}/approve`);

@@ -6,8 +6,10 @@ import {
   deleteUser,
   getAllCoursesAdmin,
   deleteCourseAdmin,
+  getPendingInstructors,
+  approveInstructor,
 } from '../api/admin';
-import type { AdminUser, AdminCourse, PlatformStats } from '../api/admin';
+import type { AdminUser, AdminCourse, PlatformStats, PendingInstructor } from '../api/admin';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -15,23 +17,36 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [courses, setCourses] = useState<AdminCourse[]>([]);
+  const [pending, setPending] = useState<PendingInstructor[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, coursesRes] = await Promise.all([
+      const [statsRes, usersRes, coursesRes, pendingRes] = await Promise.all([
         getPlatformStats(),
         getAllUsers(),
         getAllCoursesAdmin(),
+        getPendingInstructors(),
       ]);
       setStats(statsRes.data);
       setUsers(usersRes.data);
       setCourses(coursesRes.data);
+      setPending(pendingRes.data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await approveInstructor(id);
+      setPending((prev) => prev.filter((p) => p.id !== id));
+      loadData();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -99,6 +114,23 @@ const AdminDashboard = () => {
             <span className="stat-num">{stats.enrollmentCount}</span>
             <span className="stat-label">Enrollments</span>
           </div>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="admin-table" style={{ marginBottom: '32px' }}>
+          <p className="dash-eyebrow">Pending instructor approvals ({pending.length})</p>
+          {pending.map((p) => (
+            <div className="admin-row" key={p.id}>
+              <div className="admin-row-main">
+                <span className="admin-row-name">{p.name}</span>
+                <span className="admin-row-sub">{p.email}</span>
+              </div>
+              <button className="btn-solid" onClick={() => handleApprove(p.id)}>
+                Approve
+              </button>
+            </div>
+          ))}
         </div>
       )}
 

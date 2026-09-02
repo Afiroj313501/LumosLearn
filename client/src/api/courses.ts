@@ -11,6 +11,7 @@ export interface Course {
   enrollments?: any[];
   instructor?: { name: string };
   _count?: { lessons: number; enrollments: number };
+  enrollmentPassword?: string;
 }
 
 export const getMyCourses = () => api.get<Course[]>('/courses/mine');
