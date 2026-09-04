@@ -8,18 +8,45 @@ export const issueCertificate = async (req, res) => {
   try {
     const { courseId } = req.params;
 
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      include: { lessons: true, instructor: true },
+    });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
     const enrollment = await prisma.enrollment.findUnique({
       where: { studentId_courseId: { studentId: req.user.userId, courseId } },
-      include: {
-        course: { include: { instructor: true } },
-        student: true,
-      },
+      include: { student: true },
     });
 
     if (!enrollment) return res.status(404).json({ error: 'Enrollment not found' });
-    if (!enrollment.completed) {
+
+    if (!course.lessonsFinalized) {
+      return res.status(400).json({ error: 'The instructor has not finalized this course\'s content yet' });
+    }
+
+    const totalLessons = course.lessons.length;
+    if (totalLessons === 0) {
+      return res.status(400).json({ error: 'This course has no lessons yet' });
+    }
+
+    const completedCount = await prisma.progress.count({
+      where: {
+        studentId: req.user.userId,
+        completed: true,
+        lesson: { courseId },
+      },
+    });
+
+    const progressPct = (completedCount / totalLessons) * 100;
+    if (progressPct < 100) {
       return res.status(400).json({ error: 'Course is not yet 100% complete' });
     }
+
+    await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: { progressPct, completed: true },
+    });
 
     const existing = await prisma.certificate.findUnique({
       where: { studentId_courseId: { studentId: req.user.userId, courseId } },
@@ -31,8 +58,8 @@ export const issueCertificate = async (req, res) => {
 
     await generateCertificatePDF(filePath, {
       studentName: enrollment.student.name,
-      courseTitle: enrollment.course.title,
-      instructorName: enrollment.course.instructor.name,
+      courseTitle: course.title,
+      instructorName: course.instructor.name,
       date: new Date(),
     });
 
