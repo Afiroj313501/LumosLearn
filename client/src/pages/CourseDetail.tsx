@@ -55,6 +55,7 @@ const CourseDetail = () => {
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [issuingCert, setIssuingCert] = useState(false);
+  const [certError, setCertError] = useState('');
 
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
@@ -259,12 +260,13 @@ const CourseDetail = () => {
 
   const handleGetCertificate = async () => {
     if (!courseId) return;
+    setCertError('');
     setIssuingCert(true);
     try {
       const res = await issueCertificate(courseId);
       setCertificate(res.data);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setCertError(err.response?.data?.error || 'Failed to generate certificate');
     } finally {
       setIssuingCert(false);
     }
@@ -346,15 +348,22 @@ const CourseDetail = () => {
               >
                 Download certificate
               </a>
+            ) : course.lessonsFinalized ? (
+              <>
+                {certError && <p className="form-error" style={{ marginTop: '10px' }}>{certError}</p>}
+                <button
+                  className="btn-solid"
+                  style={{ marginTop: '12px' }}
+                  onClick={handleGetCertificate}
+                  disabled={issuingCert}
+                >
+                  {issuingCert ? 'Generating...' : 'Get certificate'}
+                </button>
+              </>
             ) : (
-              <button
-                className="btn-solid"
-                style={{ marginTop: '12px' }}
-                onClick={handleGetCertificate}
-                disabled={issuingCert}
-              >
-                {issuingCert ? 'Generating...' : 'Get certificate'}
-              </button>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '12px' }}>
+                Your instructor hasn't finalized this course's content yet - the certificate will become available once they do.
+              </p>
             )
           )}
         </div>

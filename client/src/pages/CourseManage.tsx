@@ -2,6 +2,8 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, updateLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
+import { getCourseById, setLessonsFinalized } from '../api/courses';
+import type { Course } from '../api/courses';
 import { uploadFile } from '../api/upload';
 import {
   getAssignmentsByCourse,
@@ -21,6 +23,7 @@ const CourseManage = () => {
   const navigate = useNavigate();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '' });
@@ -45,6 +48,7 @@ const CourseManage = () => {
   ]);
   const [quizError, setQuizError] = useState('');
   const [quizSubmitting, setQuizSubmitting] = useState(false);
+  const [togglingFinalize, setTogglingFinalize] = useState(false);
   const [gradeInputs, setGradeInputs] = useState<Record<string, { grade: string; feedback: string }>>({});
   const [gradingId, setGradingId] = useState<string | null>(null);
 
@@ -96,10 +100,34 @@ const CourseManage = () => {
     }
   };
 
+  const loadCourse = async () => {
+    if (!courseId) return;
+    try {
+      const res = await getCourseById(courseId);
+      setCourse(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadLessons();
     loadAssignments();
+    loadCourse();
   }, [courseId]);
+
+  const handleToggleFinalize = async () => {
+    if (!courseId || !course) return;
+    setTogglingFinalize(true);
+    try {
+      const res = await setLessonsFinalized(courseId, !course.lessonsFinalized);
+      setCourse(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTogglingFinalize(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -340,6 +368,28 @@ const CourseManage = () => {
       <button className="btn-back" onClick={() => navigate('/instructor')}>
         Back to courses
       </button>
+
+      {course && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '12px',
+          background: course.lessonsFinalized ? 'rgba(242,184,75,0.08)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${course.lessonsFinalized ? 'rgba(242,184,75,0.3)' : 'rgba(255,255,255,0.08)'}`,
+          borderRadius: '10px', padding: '12px 16px', marginBottom: '28px',
+        }}>
+          <span style={{ fontSize: '13px', color: 'var(--text-primary)', flex: 1 }}>
+            {course.lessonsFinalized
+              ? 'Course content marked as finalized - students can now earn certificates upon 100% completion.'
+              : 'Course content not yet finalized - students cannot earn certificates until you finalize.'}
+          </span>
+          <button
+            className={course.lessonsFinalized ? 'btn-outline-small' : 'btn-solid'}
+            onClick={handleToggleFinalize}
+            disabled={togglingFinalize}
+          >
+            {togglingFinalize ? 'Updating...' : course.lessonsFinalized ? 'Unlock (allow more edits)' : 'Mark all lessons uploaded'}
+          </button>
+        </div>
+      )}
 
       <header className="dash-header">
         <div>

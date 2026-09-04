@@ -59,7 +59,7 @@ export const issueCertificate = async (req, res) => {
     await generateCertificatePDF(filePath, {
       studentName: enrollment.student.name,
       courseTitle: course.title,
-      instructorName: course.instructor.name,
+      instructorName: course.instructor.name,   
       date: new Date(),
     });
 
