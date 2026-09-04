@@ -10,7 +10,7 @@ const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', description: '', category: '', enrollmentPassword: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', category: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const InstructorDashboard = () => {
     setSubmitting(true);
     try {
       await createCourse(formData);
-      setFormData({ title: '', description: '', category: '', enrollmentPassword: '' });
+      setFormData({ title: '', description: '', category: '' });
       setShowForm(false);
       loadCourses();
     } catch (err: any) {
@@ -79,7 +79,7 @@ const InstructorDashboard = () => {
   };
 
   const handleUseModuleAsCourse = (mod: OutlineModule) => {
-    setFormData({ title: mod.title, description: mod.description, category: '', enrollmentPassword: '' });
+    setFormData({ title: mod.title, description: mod.description, category: '' });
     setShowForm(true);
     setShowOutlineTool(false);
   };
@@ -157,11 +157,6 @@ const InstructorDashboard = () => {
             placeholder="Category (optional)"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          />
-          <input
-            placeholder="Enrollment password (optional - leave blank for open enrollment)"
-            value={formData.enrollmentPassword}
-            onChange={(e) => setFormData({ ...formData, enrollmentPassword: e.target.value })}
           />
           <button type="submit" className="btn-solid" disabled={submitting}>
             {submitting ? 'Creating…' : 'Create course'}

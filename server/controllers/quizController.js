@@ -5,10 +5,14 @@ import { extractTextFromFile } from '../services/fileTextService.js';
 export const createQuiz = async (req, res) => {
   try {
     const { lessonId } = req.params;
-    const { title, questions } = req.body;
+    const { title, questions, deadline } = req.body;
 
     if (!title || !questions || questions.length === 0) {
       return res.status(400).json({ error: 'Title and at least one question are required' });
+    }
+
+    if (deadline && new Date(deadline) <= new Date()) {
+      return res.status(400).json({ error: 'Deadline must be in the future' });
     }
 
     const lesson = await prisma.lesson.findUnique({
@@ -27,6 +31,7 @@ export const createQuiz = async (req, res) => {
       data: {
         title,
         lessonId,
+        deadline: deadline ? new Date(deadline) : null,
         questions: {
           create: questions.map((q) => ({
             text: q.text,
@@ -96,7 +101,7 @@ export const deleteQuiz = async (req, res) => {
 export const submitQuiz = async (req, res) => {
   try {
     const { id: quizId } = req.params;
-    const { answers } = req.body;
+    const { answers, forfeited } = req.body;
 
     if (!answers) return res.status(400).json({ error: 'Answers are required' });
 
@@ -110,6 +115,17 @@ export const submitQuiz = async (req, res) => {
       include: { questions: true },
     });
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    if (quiz.deadline && new Date() > new Date(quiz.deadline) && !forfeited) {
+      return res.status(403).json({ error: 'The deadline for this quiz has passed' });
+    }
+
+    if (forfeited) {
+      const submission = await prisma.submission.create({
+        data: { studentId: req.user.userId, quizId, answers: answers || {}, score: 0 },
+      });
+      return res.status(201).json({ submission, correctCount: 0, total: quiz.questions.length, score: 0, forfeited: true });
+    }
 
     let correctCount = 0;
     quiz.questions.forEach((q) => {
@@ -145,6 +161,25 @@ export const getMyQuizSubmission = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch submission' });
+  }
+};
+
+export const forfeitQuiz = async (req, res) => {
+  try {
+    const { id: quizId } = req.params;
+
+    const existing = await prisma.submission.findUnique({
+      where: { studentId_quizId: { studentId: req.user.userId, quizId } },
+    });
+    if (existing) return res.status(400).json({ error: 'Already submitted' });
+
+    const submission = await prisma.submission.create({
+      data: { studentId: req.user.userId, quizId, answers: {}, score: 0 },
+    });
+    res.status(201).json(submission);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to forfeit quiz' });
   }
 };
 

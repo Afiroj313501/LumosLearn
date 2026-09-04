@@ -9,7 +9,7 @@ import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../ap
 import type { Assignment, Submission } from '../api/assignments';
 import { uploadFile } from '../api/upload';
 import { markLessonComplete, unmarkLessonComplete, getCourseProgress } from '../api/progress';
-import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview } from '../api/quizzes';
+import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview, forfeitQuiz } from '../api/quizzes';
 import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
@@ -50,6 +50,8 @@ const CourseDetail = () => {
   const [quizResult, setQuizResult] = useState<Record<string, { score: number; correctCount: number; total: number }>>({});
   const [quizReviews, setQuizReviews] = useState<Record<string, QuizReviewItem[]>>({});
   const [showingReviewFor, setShowingReviewFor] = useState<string | null>(null);
+  const [quizStarted, setQuizStarted] = useState<Record<string, boolean>>({});
+  const [confirmingStart, setConfirmingStart] = useState<string | null>(null);
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [issuingCert, setIssuingCert] = useState(false);
@@ -130,6 +132,20 @@ const CourseDetail = () => {
     loadData();
   }, [courseId]);
 
+  useEffect(() => {
+    const activeQuizIds = Object.keys(quizStarted).filter(
+      (id) => quizStarted[id] && !quizSubmissions[id] && !quizResult[id]
+    );
+    if (activeQuizIds.length === 0) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [quizStarted, quizSubmissions, quizResult]);
+
   const handleEnroll = async () => {
     if (!courseId) return;
     setEnrollError('');
@@ -203,6 +219,27 @@ const CourseDetail = () => {
     }
   };
 
+  const handleConfirmStart = (quizId: string) => {
+    setQuizStarted((prev) => ({ ...prev, [quizId]: true }));
+    setConfirmingStart(null);
+  };
+
+  const handleBackClick = async () => {
+    const activeQuizId = Object.keys(quizStarted).find(
+      (id) => quizStarted[id] && !quizSubmissions[id] && !quizResult[id]
+    );
+    if (activeQuizId) {
+      const confirmLeave = confirm('You have an active quiz in progress. Leaving now will forfeit it and score 0. Continue?');
+      if (!confirmLeave) return;
+      try {
+        await forfeitQuiz(activeQuizId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    navigate(-1);
+  };
+
   const handleToggleReview = async (quizId: string) => {
     if (showingReviewFor === quizId) {
       setShowingReviewFor(null);
@@ -253,7 +290,7 @@ const CourseDetail = () => {
 
   return (
     <div className="course-detail">
-      <button className="btn-back" onClick={() => navigate(-1)}>Back</button>
+      <button className="btn-back" onClick={handleBackClick}>Back</button>
 
       <span className="course-category">{course.category || 'General'}</span>
       <h1>{course.title}</h1>
@@ -412,12 +449,54 @@ const CourseDetail = () => {
                     {quiz && (
                       <div className="quiz-panel">
                         <h4 className="quiz-panel-title">{quiz.title}</h4>
+                        {quiz.deadline && (
+                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 12px' }}>
+                            Deadline: {new Date(quiz.deadline).toLocaleString()}
+                          </p>
+                        )}
 
-                        {user?.role !== 'STUDENT' ? (
-                          <p className="dash-empty">Quiz preview (instructor view).</p>
-                        ) : !enrolled ? (
-                          <p className="dash-empty">Enroll to take this quiz.</p>
-                        ) : quizSubmissions[quiz.id] ? (
+                        {(() => {
+                          const isPastDeadline = quiz.deadline && new Date() > new Date(quiz.deadline);
+                          const alreadyAttempted = quizSubmissions[quiz.id] || quizResult[quiz.id];
+
+                          if (user?.role !== 'STUDENT') {
+                            return <p className="dash-empty">Quiz preview (instructor view).</p>;
+                          }
+                          if (!enrolled) {
+                            return <p className="dash-empty">Enroll to take this quiz.</p>;
+                          }
+                          if (isPastDeadline && !alreadyAttempted) {
+                            return <p className="dash-empty">The deadline for this quiz has expired. You can no longer take it.</p>;
+                          }
+                          if (!quizStarted[quiz.id] && !alreadyAttempted) {
+                            return (
+                              <div>
+                                <p className="dash-empty" style={{ marginBottom: '12px' }}>
+                                  Once you start, you must submit to receive a score. Leaving before submitting will result in a score of 0.
+                                </p>
+                                <button className="btn-solid" onClick={() => setConfirmingStart(quiz.id)}>
+                                  Start quiz
+                                </button>
+                                {confirmingStart === quiz.id && (
+                                  <div className="quiz-confirm-box">
+                                    <p>Are you sure you want to start? You cannot exit without forfeiting.</p>
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                      <button className="btn-solid" onClick={() => handleConfirmStart(quiz.id)}>
+                                        Yes, start now
+                                      </button>
+                                      <button className="btn-outline-small" onClick={() => setConfirmingStart(null)}>
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        {user?.role === 'STUDENT' && enrolled && quizSubmissions[quiz.id] ? (
                           <div className="quiz-result">
                             <p>You scored <strong>{Math.round(quizSubmissions[quiz.id]!.score)}%</strong> on this quiz.</p>
                             <button className="btn-outline-small" onClick={() => handleToggleReview(quiz.id)}>
@@ -468,7 +547,7 @@ const CourseDetail = () => {
                               </div>
                             )}
                           </div>
-                        ) : (
+                        ) : quizStarted[quiz.id] ? (
                           <div className="quiz-form">
                             {quiz.questions.map((q, qIdx) => (
                               <div className="quiz-question-view" key={q.id}>
@@ -508,7 +587,7 @@ const CourseDetail = () => {
                               {submittingQuiz === quiz.id ? 'Submitting...' : 'Submit quiz'}
                             </button>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     )}
                   </div>

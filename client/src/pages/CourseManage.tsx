@@ -39,6 +39,7 @@ const CourseManage = () => {
   const [quizzesByLesson, setQuizzesByLesson] = useState<Record<string, Quiz | null>>({});
   const [buildingQuizFor, setBuildingQuizFor] = useState<string | null>(null);
   const [quizTitle, setQuizTitle] = useState('');
+  const [quizDeadline, setQuizDeadline] = useState('');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
     { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' },
   ]);
@@ -261,9 +262,10 @@ const CourseManage = () => {
     }
     setQuizSubmitting(true);
     try {
-      await createQuiz(lessonId, { title: quizTitle, questions: quizQuestions });
+      await createQuiz(lessonId, { title: quizTitle, questions: quizQuestions, deadline: quizDeadline || undefined } as any);
       setBuildingQuizFor(null);
       setQuizTitle('');
+      setQuizDeadline('');
       setQuizQuestions([{ text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' }]);
       loadQuizzes(lessons);
     } catch (err: any) {
@@ -487,6 +489,15 @@ const CourseManage = () => {
                       value={quizTitle}
                       onChange={(e) => setQuizTitle(e.target.value)}
                     />
+                    <label className="file-input-label">
+                      Deadline (optional - leave blank for no deadline)
+                      <input
+                        type="datetime-local"
+                        value={quizDeadline}
+                        min={new Date().toISOString().slice(0, 16)}
+                        onChange={(e) => setQuizDeadline(e.target.value)}
+                      />
+                    </label>
                     <button
                       type="button"
                       className="btn-ai-generate"

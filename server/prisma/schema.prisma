@@ -99,10 +99,13 @@ model Progress {
   @@unique([studentId, lessonId])
 }
 
+
+
 model Quiz {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
-  createdAt DateTime @default(now())
+  deadline  DateTime?
+  createdAt DateTime  @default(now())
 
   lessonId  String @unique
   lesson    Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

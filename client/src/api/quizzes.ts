@@ -12,6 +12,7 @@ export interface Quiz {
   id: string;
   title: string;
   lessonId: string;
+  deadline?: string;
   questions: QuizQuestion[];
 }
 
@@ -36,13 +37,16 @@ export interface QuizReviewItem {
 export const getQuizByLesson = (lessonId: string) =>
   api.get<Quiz | null>(`/quizzes/lesson/${lessonId}`);
 
-export const createQuiz = (lessonId: string, data: { title: string; questions: QuizQuestion[] }) =>
+export const createQuiz = (lessonId: string, data: { title: string; questions: QuizQuestion[]; deadline?: string }) =>
   api.post<Quiz>(`/quizzes/lesson/${lessonId}`, data);
 
 export const deleteQuiz = (id: string) => api.delete(`/quizzes/${id}`);
 
 export const submitQuiz = (id: string, answers: Record<string, string>) =>
   api.post<{ score: number; correctCount: number; total: number }>(`/quizzes/${id}/submit`, { answers });
+
+export const forfeitQuiz = (quizId: string) =>
+  api.post(`/quizzes/${quizId}/forfeit`);
 
 export const getMyQuizSubmission = (id: string) =>
   api.get<QuizSubmission | null>(`/quizzes/${id}/my-submission`);
