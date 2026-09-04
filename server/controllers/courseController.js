@@ -98,6 +98,26 @@ export const updateCourse = async (req, res) => {
   }
 };
 
+export const setLessonsFinalized = async (req, res) => {
+  try {
+    const course = await prisma.course.findUnique({ where: { id: req.params.id } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const { finalized } = req.body;
+    const updated = await prisma.course.update({
+      where: { id: req.params.id },
+      data: { lessonsFinalized: !!finalized },
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update course' });
+  }
+};
+
 export const deleteCourse = async (req, res) => {
   try {
     const course = await prisma.course.findUnique({ where: { id: req.params.id } });
