@@ -17,6 +17,8 @@ const StudentDashboard = () => {
   const [recommendations, setRecommendations] = useState<RecommendedCourse[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [recsFetched, setRecsFetched] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
 
   const loadData = async () => {
     setLoading(true);
@@ -52,7 +54,20 @@ const StudentDashboard = () => {
   }, []);
 
   const enrolledCourseIds = new Set(enrollments.map((e) => e.course.id));
-  const browseCourses = courses.filter((c) => !enrolledCourseIds.has(c.id));
+  const notEnrolledCourses = courses.filter((c) => !enrolledCourseIds.has(c.id));
+
+  const categories = Array.from(
+    new Set(courses.map((c) => c.category).filter(Boolean))
+  ) as string[];
+
+  const browseCourses = notEnrolledCourses.filter((c) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'ALL' || c.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="student-dash">
@@ -124,27 +139,50 @@ const StudentDashboard = () => {
             ))}
           </div>
         )
-      ) : browseCourses.length === 0 ? (
-        <p className="dash-empty">No new courses to browse right now.</p>
       ) : (
-        <div className="course-grid">
-          {browseCourses.map((c) => (
-            <div
-              className="course-card"
-              key={c.id}
-              onClick={() => navigate(`/course/${c.id}`)}
+        <>
+          <div className="browse-filters">
+            <input
+              className="search-input"
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <select
+              className="category-select"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              <span className="course-category">{c.category || 'General'}</span>
-              <h3>{c.title}</h3>
-              <p className="course-desc">{c.description}</p>
-              <p className="course-instructor">by {c.instructor?.name}</p>
-              <div className="course-stats">
-                <span>{c._count?.lessons || 0} lessons</span>
-                <span>{c._count?.enrollments || 0} students</span>
-              </div>
+              <option value="ALL">All categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {browseCourses.length === 0 ? (
+            <p className="dash-empty">No courses match your search.</p>
+          ) : (
+            <div className="course-grid">
+              {browseCourses.map((c) => (
+                <div
+                  className="course-card"
+                  key={c.id}
+                  onClick={() => navigate(`/course/${c.id}`)}
+                >
+                  <span className="course-category">{c.category || 'General'}</span>
+                  <h3>{c.title}</h3>
+                  <p className="course-desc">{c.description}</p>
+                  <p className="course-instructor">by {c.instructor?.name}</p>
+                  <div className="course-stats">
+                    <span>{c._count?.lessons || 0} lessons</span>
+                    <span>{c._count?.enrollments || 0} students</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
