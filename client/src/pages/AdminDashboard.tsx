@@ -85,8 +85,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="admin-dash">
+    <div className="page-shell admin-dash">
       <TopBar />
+      <div className="page-content">
       <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Admin</p>
@@ -190,6 +191,7 @@ const AdminDashboard = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

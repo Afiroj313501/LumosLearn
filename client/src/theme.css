@@ -1,3 +1,9 @@
+:root {
+  --font-display: 'Fraunces', serif;
+  --font-content: 'Source Serif 4', Georgia, serif;
+  --font-ui: 'Sora', sans-serif;
+}
+
 html[data-theme="dark"],
 html:not([data-theme]) {
   --bg-void: #0b0c1e;
@@ -32,12 +38,26 @@ body {
   transition: background 0.25s ease, color 0.25s ease;
 }
 
+.page-shell {
+  min-height: 100vh;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+}
+
+.page-content {
+  padding: 32px 56px 56px;
+}
+
+.page-content.narrow {
+  max-width: 720px;
+}
+
 /* Shared top bar, used across every page */
 .top-bar {
   position: relative;
   z-index: 10;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 20px 56px;
   width: 100%;
@@ -60,6 +80,7 @@ body {
   gap: 16px;
   flex-shrink: 0;
   white-space: nowrap;
+  margin-left: auto;
 }
 
 .top-bar-user {

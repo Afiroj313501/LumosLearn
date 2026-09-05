@@ -71,8 +71,9 @@ const StudentDashboard = () => {
   });
 
   return (
-    <div className="student-dash">
+    <div className="page-shell student-dash">
       <TopBar />
+      <div className="page-content">
       <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Student</p>
@@ -186,6 +187,7 @@ const StudentDashboard = () => {
           )}
         </>
       )}
+      </div>
     </div>
   );
 };

@@ -365,8 +365,9 @@ const CourseManage = () => {
   };
 
   return (
-    <div className="course-manage">
+    <div className="page-shell course-manage">
       <TopBar />
+      <div className="page-content">
       <button className="btn-back" onClick={() => navigate('/instructor')}>
         Back to courses
       </button>
@@ -781,6 +782,7 @@ const CourseManage = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

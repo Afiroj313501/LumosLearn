@@ -286,13 +286,23 @@ const CourseDetail = () => {
     }
   };
 
-  if (loading) return <div className="course-detail"><TopBar /><p className="dash-empty">Loading...</p></div>;
-  if (!course) return <div className="course-detail"><TopBar /><p className="dash-empty">Course not found.</p></div>;
+  if (loading) return (
+    <div className="page-shell course-detail">
+      <TopBar />
+      <div className="page-content narrow"><p className="dash-empty">Loading...</p></div>
+    </div>
+  );
+  if (!course) return (
+    <div className="page-shell course-detail">
+      <TopBar />
+      <div className="page-content narrow"><p className="dash-empty">Course not found.</p></div>
+    </div>
+  );
 
   const canView = enrolled || user?.role !== 'STUDENT';
 
   return (
-    <div className="course-detail">
+    <div className="page-shell course-detail">
       <TopBar />
       <div className="course-detail-content">
         <button className="btn-back" onClick={handleBackClick}>Back</button>

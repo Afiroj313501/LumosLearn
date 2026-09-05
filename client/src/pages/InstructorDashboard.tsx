@@ -86,9 +86,10 @@ const InstructorDashboard = () => {
   };
 
   return (
-    <div className="instructor-dash">
-    <TopBar />
-    <header className="dash-header">
+    <div className="page-shell instructor-dash">
+      <TopBar />
+      <div className="page-content">
+      <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Instructor</p>
           <h1>Your courses</h1>
@@ -199,6 +200,7 @@ const InstructorDashboard = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
