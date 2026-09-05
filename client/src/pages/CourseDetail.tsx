@@ -11,6 +11,8 @@ import { uploadFile } from '../api/upload';
 import { markLessonComplete, unmarkLessonComplete, getCourseProgress } from '../api/progress';
 import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview, forfeitQuiz } from '../api/quizzes';
 import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
+import { getAnnouncementsByCourse } from '../api/announcement';
+import type { Announcement } from '../api/announcement';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
 import { summarizeLesson } from '../api/lessons';
@@ -39,6 +41,7 @@ const CourseDetail = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [mySubmissions, setMySubmissions] = useState<Record<string, Submission | null>>({});
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
   const [progressPct, setProgressPct] = useState(0);
@@ -88,6 +91,9 @@ const CourseDetail = () => {
 
       const assignRes = await getAssignmentsByCourse(courseId);
       setAssignments(assignRes.data);
+
+      const annRes = await getAnnouncementsByCourse(courseId);
+      setAnnouncements(annRes.data);
 
       if (user?.role === 'STUDENT') {
         const subResults = await Promise.all(
@@ -379,6 +385,20 @@ const CourseDetail = () => {
               </p>
             )
           )}
+        </div>
+      )}
+
+      {announcements.length > 0 && (
+        <div className="quiz-panel" style={{ marginBottom: '32px' }}>
+          <h4 className="quiz-panel-title">Announcements</h4>
+          {announcements.map((a) => (
+            <p key={a.id} className="lesson-text" style={{ marginBottom: '10px' }}>
+              {a.message}
+              <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                {new Date(a.createdAt).toLocaleDateString()}
+              </span>
+            </p>
+          ))}
         </div>
       )}
 

@@ -15,6 +15,8 @@ import {
 import type { Assignment, Submission } from '../api/assignments';
 import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizAI, getQuizResults } from '../api/quizzes';
 import type { Quiz, QuizQuestion, QuizResultRow } from '../api/quizzes';
+import { getAnnouncementsByCourse, createAnnouncement, deleteAnnouncement } from '../api/announcement';
+import type { Announcement } from '../api/announcement';
 import { API_ORIGIN } from '../api/config';
 import TopBar from '../components/TopBar';
 import './CourseManage.css';
@@ -39,6 +41,9 @@ const CourseManage = () => {
   const [assignSubmitting, setAssignSubmitting] = useState(false);
   const [viewingSubmissionsFor, setViewingSubmissionsFor] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementText, setAnnouncementText] = useState('');
+  const [postingAnnouncement, setPostingAnnouncement] = useState(false);
 
   const [quizzesByLesson, setQuizzesByLesson] = useState<Record<string, Quiz | null>>({});
   const [buildingQuizFor, setBuildingQuizFor] = useState<string | null>(null);
@@ -111,10 +116,21 @@ const CourseManage = () => {
     }
   };
 
+  const loadAnnouncements = async () => {
+    if (!courseId) return;
+    try {
+      const res = await getAnnouncementsByCourse(courseId);
+      setAnnouncements(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadLessons();
     loadAssignments();
     loadCourse();
+    loadAnnouncements();
   }, [courseId]);
 
   const handleToggleFinalize = async () => {
@@ -127,6 +143,30 @@ const CourseManage = () => {
       console.error(err);
     } finally {
       setTogglingFinalize(false);
+    }
+  };
+
+  const handlePostAnnouncement = async () => {
+    if (!courseId || !announcementText.trim()) return;
+    setPostingAnnouncement(true);
+    try {
+      await createAnnouncement(courseId, announcementText);
+      setAnnouncementText('');
+      loadAnnouncements();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPostingAnnouncement(false);
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm('Delete this announcement?')) return;
+    try {
+      await deleteAnnouncement(id);
+      loadAnnouncements();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -393,6 +433,31 @@ const CourseManage = () => {
           </button>
         </div>
       )}
+
+      <div className="lesson-form" style={{ marginBottom: '32px' }}>
+        <p className="dash-eyebrow" style={{ margin: '0 0 4px' }}>Announcements</p>
+        <textarea
+          placeholder="Post an update to all enrolled students (they'll get an email)..."
+          value={announcementText}
+          onChange={(e) => setAnnouncementText(e.target.value)}
+          rows={2}
+        />
+        <button className="btn-solid" onClick={handlePostAnnouncement} disabled={postingAnnouncement || !announcementText.trim()}>
+          {postingAnnouncement ? 'Posting...' : 'Post announcement'}
+        </button>
+
+        {announcements.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            {announcements.map((a) => (
+              <div key={a.id} className="submission-row" style={{ justifyContent: 'space-between' }}>
+                <span style={{ flex: 1 }}>{a.message}</span>
+                <span className="submission-date">{new Date(a.createdAt).toLocaleDateString()}</span>
+                <button className="btn-danger" onClick={() => handleDeleteAnnouncement(a.id)}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <header className="dash-header">
         <div>
