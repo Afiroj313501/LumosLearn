@@ -1,0 +1,98 @@
+html[data-theme="dark"],
+html:not([data-theme]) {
+  --bg-void: #0b0c1e;
+  --bg-panel: #161834;
+  --accent-lumen: #f2b84b;
+  --accent-violet: #8c7cf0;
+  --text-primary: #f5f3ed;
+  --text-muted: #a9a8c3;
+  --surface-1: rgba(255,255,255,0.05);
+  --surface-2: rgba(255,255,255,0.03);
+  --border-color: rgba(255,255,255,0.08);
+  --border-color-strong: rgba(255,255,255,0.15);
+  --shadow-color: rgba(0,0,0,0.5);
+}
+
+html[data-theme="light"] {
+  --bg-void: #faf8f4;
+  --bg-panel: #ffffff;
+  --accent-lumen: #c8791a;
+  --accent-violet: #6952d6;
+  --text-primary: #221f2e;
+  --text-muted: #6b6879;
+  --surface-1: rgba(20,15,5,0.045);
+  --surface-2: rgba(20,15,5,0.025);
+  --border-color: rgba(20,15,5,0.10);
+  --border-color-strong: rgba(20,15,5,0.18);
+  --shadow-color: rgba(20,15,5,0.12);
+}
+
+body {
+  background: var(--bg-void);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Shared top bar, used across every page */
+.top-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 56px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+}
+
+.top-bar .brand {
+  font-family: 'Fraunces', serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.top-bar .brand em { color: var(--accent-lumen); font-style: normal; }
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.top-bar-user {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  font-size: 16px;
+}
+.theme-toggle-btn:hover { background: var(--surface-2); transform: scale(1.05); }
+
+.btn-ghost {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 9px 16px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.btn-ghost:hover { background: var(--surface-1); }

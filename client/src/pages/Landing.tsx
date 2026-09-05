@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
+import TopBar from '../components/TopBar';
 import './Landing.css';
 
 const FEATURES = [
@@ -29,15 +30,8 @@ const FEATURES = [
 
 const Landing = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const goToDashboard = () => {
-    if (!user) return;
-    if (user.role === 'ADMIN') navigate('/admin');
-    else if (user.role === 'INSTRUCTOR') navigate('/instructor');
-    else navigate('/student');
-  };
+  const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="landing">
@@ -57,21 +51,20 @@ const Landing = () => {
         <circle cx={900} cy={230} r={3} />
       </svg>
 
-      <nav className="landing-nav">
-        <span className="brand">Lumen<em>Learner</em></span>
         {user ? (
-          <div className="nav-actions">
-            <span className="nav-user">Hi, {user.name.split(' ')[0]}</span>
-            <button className="btn-ghost" onClick={goToDashboard}>Dashboard</button>
-            <button className="btn-ghost" onClick={logout}>Log out</button>
-          </div>
+          <TopBar />
         ) : (
-          <div className="nav-actions">
+          <div className="top-bar">
+            <span className="brand">Lumen<em>Learner</em></span>
+            <div className="top-bar-actions">
+              <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle theme">
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
             <button className="btn-ghost" onClick={() => setModalOpen(true)}>Sign in</button>
             <button className="btn-solid" onClick={() => setModalOpen(true)}>Get started</button>
+            </div>
           </div>
         )}
-      </nav>
 
       <header className="hero">
         <p className="eyebrow">AI-powered learning management</p>

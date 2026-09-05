@@ -6,6 +6,7 @@ import { getMyEnrollments } from '../api/enrollments';
 import type { Enrollment } from '../api/enrollments';
 import { getRecommendations } from '../api/ai';
 import type { RecommendedCourse } from '../api/ai';
+import TopBar from '../components/TopBar';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -71,6 +72,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="student-dash">
+      <TopBar />
       <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Student</p>

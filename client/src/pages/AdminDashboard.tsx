@@ -10,6 +10,7 @@ import {
   approveInstructor,
 } from '../api/admin';
 import type { AdminUser, AdminCourse, PlatformStats, PendingInstructor } from '../api/admin';
+import TopBar from '../components/TopBar';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -85,6 +86,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dash">
+      <TopBar />
       <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Admin</p>

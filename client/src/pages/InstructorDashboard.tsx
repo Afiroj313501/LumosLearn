@@ -5,6 +5,7 @@ import './InstructorDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import { generateOutline } from '../api/ai';
 import type { OutlineModule } from '../api/ai';
+import TopBar from '../components/TopBar';
 
 const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -86,7 +87,8 @@ const InstructorDashboard = () => {
 
   return (
     <div className="instructor-dash">
-          <header className="dash-header">
+    <TopBar />
+    <header className="dash-header">
         <div>
           <p className="dash-eyebrow">Instructor</p>
           <h1>Your courses</h1>

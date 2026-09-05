@@ -48,7 +48,7 @@
 .modal-tabs {
   display: flex;
   gap: 4px;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface-1);
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 24px;
@@ -117,8 +117,8 @@
 }
 
 .modal-form input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 13px 14px;
   font-family: 'Sora', sans-serif;
@@ -130,7 +130,7 @@
 .modal-form input::placeholder { color: var(--text-muted); }
 .modal-form input:focus {
   border-color: var(--accent-lumen);
-  background: rgba(255,255,255,0.07);
+  background: var(--surface-1);
 }
 
 .role-toggle {
@@ -142,8 +142,8 @@
 .role-btn {
   flex: 1;
   padding: 10px 0;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 9px;
   color: var(--text-muted);
   font-family: 'Sora', sans-serif;

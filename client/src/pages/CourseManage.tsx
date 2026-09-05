@@ -16,6 +16,7 @@ import type { Assignment, Submission } from '../api/assignments';
 import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizAI, getQuizResults } from '../api/quizzes';
 import type { Quiz, QuizQuestion, QuizResultRow } from '../api/quizzes';
 import { API_ORIGIN } from '../api/config';
+import TopBar from '../components/TopBar';
 import './CourseManage.css';
 
 const CourseManage = () => {
@@ -365,6 +366,7 @@ const CourseManage = () => {
 
   return (
     <div className="course-manage">
+      <TopBar />
       <button className="btn-back" onClick={() => navigate('/instructor')}>
         Back to courses
       </button>

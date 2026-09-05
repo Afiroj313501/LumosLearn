@@ -15,6 +15,7 @@ import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
 import { summarizeLesson } from '../api/lessons';
 import StudyAssistant from '../components/StudyAssistant';
+import TopBar from '../components/TopBar';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -285,14 +286,16 @@ const CourseDetail = () => {
     }
   };
 
-  if (loading) return <div className="course-detail"><p className="dash-empty">Loading...</p></div>;
-  if (!course) return <div className="course-detail"><p className="dash-empty">Course not found.</p></div>;
+  if (loading) return <div className="course-detail"><TopBar /><p className="dash-empty">Loading...</p></div>;
+  if (!course) return <div className="course-detail"><TopBar /><p className="dash-empty">Course not found.</p></div>;
 
   const canView = enrolled || user?.role !== 'STUDENT';
 
   return (
     <div className="course-detail">
-      <button className="btn-back" onClick={handleBackClick}>Back</button>
+      <TopBar />
+      <div className="course-detail-content">
+        <button className="btn-back" onClick={handleBackClick}>Back</button>
 
       <span className="course-category">{course.category || 'General'}</span>
       <h1>{course.title}</h1>
@@ -668,6 +671,7 @@ const CourseDetail = () => {
       {courseId && (enrolled || user?.role !== 'STUDENT') && (
         <StudyAssistant courseId={courseId} />
       )}
+      </div>
     </div>
   );
 };
