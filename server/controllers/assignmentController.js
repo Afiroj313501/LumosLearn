@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { sendEmail, gradeEmail } from '../services/emailService.js';
 
 export const createAssignment = async (req, res) => {
   try {
@@ -152,7 +153,10 @@ export const gradeSubmission = async (req, res) => {
 
     const submission = await prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
-      include: { assignment: { include: { course: true } } },
+      include: {
+        assignment: { include: { course: true } },
+        student: true,
+      },
     });
     if (!submission) return res.status(404).json({ error: 'Submission not found' });
 
@@ -167,6 +171,14 @@ export const gradeSubmission = async (req, res) => {
       where: { id: submissionId },
       data: { grade: grade ?? null, feedback: feedback ?? null },
     });
+
+    if (grade != null) {
+      sendEmail(
+        submission.student.email,
+        `Grade posted: ${submission.assignment.title}`,
+        gradeEmail(submission.assignment.title, submission.assignment.course.title, grade, feedback)
+      ).catch((err) => console.error('Grade email error:', err));
+    }
 
     res.json(updated);
   } catch (err) {
