@@ -45,6 +45,7 @@ model Course {
   lessonsFinalized Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  announcements Announcement[]
 
   instructorId String
   instructor   User @relation("InstructorCourses", fields: [instructorId], references: [id])
@@ -185,4 +186,12 @@ model AssignmentSubmission {
   student   User   @relation(fields: [studentId], references: [id])
 
   @@unique([assignmentId, studentId])
+}
+model Announcement {
+  id        String   @id @default(uuid())
+  message   String
+  createdAt DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
