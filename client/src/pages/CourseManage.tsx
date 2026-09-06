@@ -2,8 +2,8 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, updateLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
-import { getCourseById, setLessonsFinalized, exportGradesCSV } from '../api/courses';
-import type { Course } from '../api/courses';
+import { getCourseById, setLessonsFinalized, exportGradesCSV, getCourseEnrollments } from '../api/courses';
+import type { Course, CourseEnrollment } from '../api/courses';
 import { uploadFile } from '../api/upload';
 import {
   getAssignmentsByCourse,
@@ -27,6 +27,8 @@ const CourseManage = () => {
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
+  const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
+  const [showStudentSidebar, setShowStudentSidebar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '' });
@@ -121,6 +123,16 @@ const CourseManage = () => {
     try {
       const res = await getAnnouncementsByCourse(courseId);
       setAnnouncements(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadEnrollments = async () => {
+    if (!courseId) return;
+    try {
+      const res = await getCourseEnrollments(courseId);
+      setEnrollments(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -425,9 +437,23 @@ const CourseManage = () => {
     <div className="page-shell course-manage">
       <TopBar />
       <div className="page-content">
-      <button className="btn-back" onClick={() => navigate('/instructor')}>
-        Back to courses
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button className="btn-back" onClick={() => navigate('/instructor')}>
+          Back to courses
+        </button>
+        <button
+          className="btn-outline-small"
+          onClick={() => {
+            if (!showStudentSidebar) loadEnrollments();
+            setShowStudentSidebar(!showStudentSidebar);
+          }}
+        >
+          {showStudentSidebar ? 'Hide' : 'View'} enrolled students ({enrollments.length})
+        </button>
+      </div>
+
+      <div className={showStudentSidebar ? 'course-manage-layout' : ''}>
+        <div className="course-manage-main">
 
       {course && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
@@ -880,7 +906,39 @@ const CourseManage = () => {
           ))}
         </div>
       )}
+        </div>
+
+        {showStudentSidebar && (
+        <aside className="course-manage-sidebar">
+          <p className="dash-eyebrow" style={{ marginBottom: '14px' }}>
+            Enrolled students ({enrollments.length})
+          </p>
+          {enrollments.length === 0 ? (
+            <p className="dash-empty">No students enrolled yet.</p>
+          ) : (
+            <div className="student-list">
+              {enrollments.map((enrollment) => (
+                <div className="student-list-item" key={enrollment.id}>
+                  <div className="student-list-info">
+                    <span className="student-list-name">{enrollment.student.name}</span>
+                    <span className="student-list-email">{enrollment.student.email}</span>
+                  </div>
+                  <div className="student-list-progress">
+                    <div className="progress-bar-track" style={{ height: '5px' }}>
+                      <div className="progress-bar-fill" style={{ width: `${enrollment.progressPct}%` }} />
+                    </div>
+                    <span className="student-list-pct">
+                      {Math.round(enrollment.progressPct)}%{enrollment.completed ? ' - Completed' : ''}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
+        )}
       </div>
+    </div>
     </div>
   );
 };

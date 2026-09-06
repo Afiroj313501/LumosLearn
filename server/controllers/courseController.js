@@ -134,6 +134,29 @@ export const deleteCourse = async (req, res) => {
   }
 };
 
+export const getCourseEnrollments = async (req, res) => {
+  try {
+    const { id: courseId } = req.params;
+
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      include: { student: { select: { name: true, email: true } } },
+      orderBy: { enrolledAt: 'desc' },
+    });
+
+    res.json(enrollments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch enrollments' });
+  }
+};
+
 import { Parser } from 'json2csv';
 
 export const exportGradesCSV = async (req, res) => {

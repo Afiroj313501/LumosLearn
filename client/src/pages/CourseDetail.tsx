@@ -363,16 +363,15 @@ const CourseDetail = () => {
                 target="_blank"
                 rel="noreferrer"
                 className="btn-solid"
-                style={{ display: 'inline-block', marginTop: '12px', textDecoration: 'none' }}
+                style={{ textDecoration: 'none' }}
               >
                 Download certificate
               </a>
             ) : course.lessonsFinalized ? (
               <>
-                {certError && <p className="form-error" style={{ marginTop: '10px' }}>{certError}</p>}
+                {certError && <p className="form-error">{certError}</p>}
                 <button
                   className="btn-solid"
-                  style={{ marginTop: '12px' }}
                   onClick={handleGetCertificate}
                   disabled={issuingCert}
                 >
@@ -380,7 +379,7 @@ const CourseDetail = () => {
                 </button>
               </>
             ) : (
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '12px' }}>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
                 Your instructor hasn't finalized this course's content yet - the certificate will become available once they do.
               </p>
             )
