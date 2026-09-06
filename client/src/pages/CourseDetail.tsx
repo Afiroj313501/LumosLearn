@@ -548,7 +548,7 @@ const CourseDetail = () => {
                               <div className="quiz-review">
                                 {quizReviews[quiz.id].map((r, rIdx) => (
                                   <div className={r.isCorrect ? 'review-item correct' : 'review-item incorrect'} key={r.id}>
-                                    <p className="review-question">{rIdx + 1}. {r.text}</p>
+                                    <p className="review-question">{rIdx + 1}. {r.text} ({r.marks} mark{r.marks !== 1 ? 's' : ''})</p>
                                     <p className="review-answer">
                                       Your answer: <strong>{r.studentAnswer || '(no answer)'}</strong>
                                     </p>
@@ -575,7 +575,7 @@ const CourseDetail = () => {
                               <div className="quiz-review">
                                 {quizReviews[quiz.id].map((r, rIdx) => (
                                   <div className={r.isCorrect ? 'review-item correct' : 'review-item incorrect'} key={r.id}>
-                                    <p className="review-question">{rIdx + 1}. {r.text}</p>
+                                    <p className="review-question">{rIdx + 1}. {r.text} ({r.marks} mark{r.marks !== 1 ? 's' : ''})</p>
                                     <p className="review-answer">
                                       Your answer: <strong>{r.studentAnswer || '(no answer)'}</strong>
                                     </p>
@@ -594,7 +594,7 @@ const CourseDetail = () => {
                             {quiz.questions.map((q, qIdx) => (
                               <div className="quiz-question-view" key={q.id}>
                                 <p className="quiz-question-text">
-                                  {qIdx + 1}. {q.text}
+                                  {qIdx + 1}. {q.text} <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>({q.marks} mark{q.marks !== 1 ? 's' : ''})</span>
                                 </p>
                                 {q.type === 'MCQ' && q.options ? (
                                   <div className="quiz-options-list">

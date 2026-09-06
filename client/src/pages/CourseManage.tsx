@@ -50,7 +50,7 @@ const CourseManage = () => {
   const [quizTitle, setQuizTitle] = useState('');
   const [quizDeadline, setQuizDeadline] = useState('');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([
-    { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' },
+    { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '', marks: 1 },
   ]);
   const [quizError, setQuizError] = useState('');
   const [quizSubmitting, setQuizSubmitting] = useState(false);
@@ -315,7 +315,7 @@ const CourseManage = () => {
   };
 
   const addQuestion = () => {
-    setQuizQuestions([...quizQuestions, { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' }]);
+    setQuizQuestions([...quizQuestions, { text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '', marks: 1 }]);
   };
 
   const removeQuestion = (idx: number) => {
@@ -352,7 +352,7 @@ const CourseManage = () => {
       setBuildingQuizFor(null);
       setQuizTitle('');
       setQuizDeadline('');
-      setQuizQuestions([{ text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '' }]);
+      setQuizQuestions([{ text: '', type: 'MCQ', options: ['', '', '', ''], correctAnswer: '', marks: 1 }]);
       loadQuizzes(lessons);
     } catch (err: any) {
       setQuizError(err.response?.data?.error || 'Failed to create quiz');
@@ -696,6 +696,14 @@ const CourseManage = () => {
                           value={q.correctAnswer}
                           onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
                         />
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Marks for this question"
+                          value={q.marks ?? 1}
+                          onChange={(e) => updateQuestion(qIdx, 'marks', parseInt(e.target.value) || 1)}
+                          style={{ maxWidth: '160px' }}
+                        />
                       </div>
                     ))}
 
@@ -722,7 +730,7 @@ const CourseManage = () => {
                         <div className="submission-row" key={r.id}>
                           <span>{r.student.name}</span>
                           <span style={{ color: 'var(--accent-lumen)', fontWeight: 700 }}>
-                            {Math.round(r.score)}%
+                            {r.earnedMarks}/{r.totalMarks} ({Math.round(r.score)}%)
                           </span>
                           <span className="submission-date">
                             {new Date(r.submittedAt).toLocaleString()}

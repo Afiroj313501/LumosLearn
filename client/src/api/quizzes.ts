@@ -6,6 +6,7 @@ export interface QuizQuestion {
   type: 'MCQ' | 'SHORT_ANSWER';
   options?: string[];
   correctAnswer: string;
+  marks?: number;
 }
 
 export interface Quiz {
@@ -29,6 +30,7 @@ export interface QuizReviewItem {
   type: 'MCQ' | 'SHORT_ANSWER';
   options?: string[];
   correctAnswer: string;
+  marks: number;
   studentAnswer: string;
   isCorrect: boolean;
 }
@@ -43,7 +45,7 @@ export const createQuiz = (lessonId: string, data: { title: string; questions: Q
 export const deleteQuiz = (id: string) => api.delete(`/quizzes/${id}`);
 
 export const submitQuiz = (id: string, answers: Record<string, string>) =>
-  api.post<{ score: number; correctCount: number; total: number }>(`/quizzes/${id}/submit`, { answers });
+  api.post<{ score: number; correctCount: number; total: number; earnedMarks: number; totalMarks: number }>(`/quizzes/${id}/submit`, { answers });
 
 export const forfeitQuiz = (quizId: string) =>
   api.post(`/quizzes/${quizId}/forfeit`);
@@ -55,12 +57,14 @@ export const generateQuizAI = (lessonId: string, numQuestions?: number) =>
   api.post<{ questions: QuizQuestion[] }>(`/quizzes/lesson/${lessonId}/generate`, { numQuestions });
 
 export const getQuizReview = (quizId: string) =>
-  api.get<{ score: number; review: QuizReviewItem[] }>(`/quizzes/${quizId}/review`);
+  api.get<{ score: number; earnedMarks: number; totalMarks: number; review: QuizReviewItem[] }>(`/quizzes/${quizId}/review`);
 
 export interface QuizResultRow {
   id: string;
   score: number;
   submittedAt: string;
+  earnedMarks: number;
+  totalMarks: number;
   student: { name: string; email: string };
 }
 
