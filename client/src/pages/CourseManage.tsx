@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLessonsByCourse, createLesson, updateLesson, deleteLesson } from '../api/lessons';
 import type { Lesson } from '../api/lessons';
-import { getCourseById, setLessonsFinalized } from '../api/courses';
+import { getCourseById, setLessonsFinalized, exportGradesCSV } from '../api/courses';
 import type { Course } from '../api/courses';
 import { uploadFile } from '../api/upload';
 import {
@@ -143,6 +143,23 @@ const CourseManage = () => {
       console.error(err);
     } finally {
       setTogglingFinalize(false);
+    }
+  };
+
+  const handleExportGrades = async () => {
+    if (!courseId) return;
+    try {
+      const res = await exportGradesCSV(courseId);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${course?.title || 'course'}_grades.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export grades');
     }
   };
 
@@ -411,6 +428,14 @@ const CourseManage = () => {
       <button className="btn-back" onClick={() => navigate('/instructor')}>
         Back to courses
       </button>
+
+      {course && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+          <button className="btn-outline-small" onClick={handleExportGrades}>
+            Export grades (CSV)
+          </button>
+        </div>
+      )}
 
       {course && (
         <div style={{
