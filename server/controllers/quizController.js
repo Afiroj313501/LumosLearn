@@ -38,6 +38,7 @@ export const createQuiz = async (req, res) => {
             type: q.type || 'MCQ',
             options: q.options || null,
             correctAnswer: q.correctAnswer,
+            marks: q.marks || 1,
           })),
         },
       },
@@ -67,6 +68,7 @@ export const getQuizByLesson = async (req, res) => {
           text: q.text,
           type: q.type,
           options: q.options,
+          marks: q.marks,
         })),
       };
       return res.json(sanitized);
@@ -128,13 +130,17 @@ export const submitQuiz = async (req, res) => {
     }
 
     let correctCount = 0;
+    let earnedMarks = 0;
+    const totalMarks = quiz.questions.reduce((sum, q) => sum + q.marks, 0);
+
     quiz.questions.forEach((q) => {
       const given = answers[q.id];
       if (given && given.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
         correctCount++;
+        earnedMarks += q.marks;
       }
     });
-    const score = (correctCount / quiz.questions.length) * 100;
+    const score = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0;
 
     const submission = await prisma.submission.create({
       data: {
@@ -145,7 +151,14 @@ export const submitQuiz = async (req, res) => {
       },
     });
 
-    res.status(201).json({ submission, correctCount, total: quiz.questions.length, score });
+    res.status(201).json({
+      submission,
+      correctCount,
+      total: quiz.questions.length,
+      earnedMarks,
+      totalMarks,
+      score,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to submit quiz' });
@@ -236,19 +249,28 @@ export const getQuizReview = async (req, res) => {
     });
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
-    const review = quiz.questions.map((q) => ({
-      id: q.id,
-      text: q.text,
-      type: q.type,
-      options: q.options,
-      correctAnswer: q.correctAnswer,
-      studentAnswer: submission.answers[q.id] || '',
-      isCorrect:
-        (submission.answers[q.id] || '').trim().toLowerCase() ===
-        q.correctAnswer.trim().toLowerCase(),
-    }));
+    const totalMarks = quiz.questions.reduce((sum, q) => sum + q.marks, 0);
+    let earnedMarks = 0;
 
-    res.json({ score: submission.score, review });
+    const review = quiz.questions.map((q) => {
+      const isCorrect =
+        (submission.answers[q.id] || '').trim().toLowerCase() ===
+        q.correctAnswer.trim().toLowerCase();
+      if (isCorrect) earnedMarks += q.marks;
+
+      return {
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        marks: q.marks,
+        studentAnswer: submission.answers[q.id] || '',
+        isCorrect,
+      };
+    });
+
+    res.json({ score: submission.score, earnedMarks, totalMarks, review });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch quiz review' });
@@ -261,7 +283,7 @@ export const getQuizResults = async (req, res) => {
 
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      include: { lesson: { include: { course: true } } },
+      include: { lesson: { include: { course: true } }, questions: true },
     });
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
 
@@ -269,13 +291,21 @@ export const getQuizResults = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to view results for this quiz' });
     }
 
+    const totalMarks = quiz.questions.reduce((sum, q) => sum + q.marks, 0);
+
     const submissions = await prisma.submission.findMany({
       where: { quizId },
       include: { student: { select: { name: true, email: true } } },
       orderBy: { score: 'desc' },
     });
 
-    res.json(submissions);
+    const withMarks = submissions.map((s) => ({
+      ...s,
+      earnedMarks: Math.round((s.score / 100) * totalMarks),
+      totalMarks,
+    }));
+
+    res.json(withMarks);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch quiz results' });
