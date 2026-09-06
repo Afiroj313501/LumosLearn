@@ -20,6 +20,8 @@ import type { Announcement } from '../api/announcement';
 import { API_ORIGIN } from '../api/config';
 import TopBar from '../components/TopBar';
 import { useToast } from '../context/ToastContext';
+import { SkeletonRow } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import './CourseManage.css';
 
 const CourseManage = () => {
@@ -566,9 +568,13 @@ const CourseManage = () => {
       )}
 
       {loading ? (
-        <p className="dash-empty">Loading lessons...</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
       ) : lessons.length === 0 ? (
-        <p className="dash-empty">No lessons yet - add your first one above.</p>
+        <EmptyState icon="lesson" title="No lessons yet" subtitle="Add your first lesson using the button above." />
       ) : (
         <div className="lesson-list">
           {lessons.map((l, idx) => {
@@ -823,7 +829,7 @@ const CourseManage = () => {
       )}
 
       {assignments.length === 0 ? (
-        <p className="dash-empty">No assignments yet.</p>
+        <EmptyState icon="assignment" title="No assignments yet" subtitle="Create one so students have something to submit." />
       ) : (
         <div className="lesson-list">
           {assignments.map((a) => (
@@ -923,7 +929,7 @@ const CourseManage = () => {
             Enrolled students ({enrollments.length})
           </p>
           {enrollments.length === 0 ? (
-            <p className="dash-empty">No students enrolled yet.</p>
+            <EmptyState icon="user" title="No students yet" />
           ) : (
             <div className="student-list">
               {enrollments.map((enrollment) => (

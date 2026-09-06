@@ -7,6 +7,8 @@ import { generateOutline } from '../api/ai';
 import type { OutlineModule } from '../api/ai';
 import TopBar from '../components/TopBar';
 import { useToast } from '../context/ToastContext';
+import { SkeletonCardGrid } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 
 const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -174,9 +176,13 @@ const InstructorDashboard = () => {
       )}
 
       {loading ? (
-        <p className="dash-empty">Loading your courses…</p>
+        <SkeletonCardGrid count={3} />
       ) : courses.length === 0 ? (
-        <p className="dash-empty">You haven't created any courses yet.</p>
+        <EmptyState
+          icon="course"
+          title="No courses yet"
+          subtitle="Create your first course to start adding lessons and enrolling students."
+        />
       ) : (
         <div className="course-grid">
           {courses.map((c) => (

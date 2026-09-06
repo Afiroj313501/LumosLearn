@@ -7,6 +7,8 @@ import type { Enrollment } from '../api/enrollments';
 import { getRecommendations } from '../api/ai';
 import type { RecommendedCourse } from '../api/ai';
 import TopBar from '../components/TopBar';
+import { SkeletonCardGrid } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -119,10 +121,14 @@ const StudentDashboard = () => {
       </div>
 
       {loading ? (
-        <p className="dash-empty">Loading…</p>
+        <SkeletonCardGrid count={3} />
       ) : tab === 'enrolled' ? (
         enrollments.length === 0 ? (
-          <p className="dash-empty">You're not enrolled in any courses yet — browse to get started.</p>
+          <EmptyState
+            icon="course"
+            title="No courses yet"
+            subtitle="You're not enrolled in anything — browse available courses to get started."
+          />
         ) : (
           <div className="course-grid">
             {enrollments.map((e) => (
@@ -164,7 +170,7 @@ const StudentDashboard = () => {
           </div>
 
           {browseCourses.length === 0 ? (
-            <p className="dash-empty">No courses match your search.</p>
+            <EmptyState icon="search" title="No matches" subtitle="Try a different search term or category." />
           ) : (
             <div className="course-grid">
               {browseCourses.map((c) => (

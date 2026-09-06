@@ -18,6 +18,8 @@ import type { Certificate } from '../api/certificate';
 import { summarizeLesson } from '../api/lessons';
 import StudyAssistant from '../components/StudyAssistant';
 import TopBar from '../components/TopBar';
+import { SkeletonLine } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -295,7 +297,13 @@ const CourseDetail = () => {
   if (loading) return (
     <div className="page-shell course-detail">
       <TopBar />
-      <div className="page-content narrow"><p className="dash-empty">Loading...</p></div>
+      <div className="page-content narrow">
+        <SkeletonLine width="60px" height="12px" />
+        <div style={{ marginTop: '16px' }}><SkeletonLine width="80%" height="32px" /></div>
+        <div style={{ marginTop: '10px' }}><SkeletonLine width="40%" height="14px" /></div>
+        <div style={{ marginTop: '16px' }}><SkeletonLine width="100%" height="14px" /></div>
+        <div style={{ marginTop: '8px' }}><SkeletonLine width="90%" height="14px" /></div>
+      </div>
     </div>
   );
   if (!course) return (
@@ -638,7 +646,7 @@ const CourseDetail = () => {
           })}
         </div>
       ) : (
-        <p className="dash-empty">No lessons published yet.</p>
+        <EmptyState icon="lesson" title="No lessons published yet" subtitle="Check back soon - your instructor is still building this course." />
       )}
 
       {assignments.length > 0 && (

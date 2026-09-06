@@ -12,6 +12,8 @@ import {
 import type { AdminUser, AdminCourse, PlatformStats, PendingInstructor } from '../api/admin';
 import TopBar from '../components/TopBar';
 import { useToast } from '../context/ToastContext';
+import { SkeletonRow } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -157,10 +159,14 @@ const AdminDashboard = () => {
       </div>
 
       {loading ? (
-        <p className="dash-empty">Loading...</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
       ) : tab === 'users' ? (
         <div className="admin-table">
-          {users.map((u) => (
+          {users.length === 0 ? <EmptyState icon="user" title="No users found" /> : users.map((u) => (
             <div className="admin-row" key={u.id}>
               <div className="admin-row-main">
                 <span className="admin-row-name">{u.name}</span>
@@ -186,7 +192,7 @@ const AdminDashboard = () => {
         </div>
       ) : (
         <div className="admin-table">
-          {courses.map((c) => (
+          {courses.length === 0 ? <EmptyState icon="course" title="No courses found" /> : courses.map((c) => (
             <div className="admin-row" key={c.id}>
               <div className="admin-row-main">
                 <span className="admin-row-name">{c.title}</span>
