@@ -19,11 +19,13 @@ import { getAnnouncementsByCourse, createAnnouncement, deleteAnnouncement } from
 import type { Announcement } from '../api/announcement';
 import { API_ORIGIN } from '../api/config';
 import TopBar from '../components/TopBar';
+import { useToast } from '../context/ToastContext';
 import './CourseManage.css';
 
 const CourseManage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [course, setCourse] = useState<Course | null>(null);
@@ -169,9 +171,10 @@ const CourseManage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      showToast('Grades exported');
     } catch (err) {
       console.error(err);
-      alert('Failed to export grades');
+      showToast('Failed to export grades', 'error');
     }
   };
 
@@ -182,8 +185,10 @@ const CourseManage = () => {
       await createAnnouncement(courseId, announcementText);
       setAnnouncementText('');
       loadAnnouncements();
+      showToast('Announcement posted - students will be emailed');
     } catch (err) {
       console.error(err);
+      showToast('Failed to post announcement', 'error');
     } finally {
       setPostingAnnouncement(false);
     }
@@ -236,8 +241,10 @@ const CourseManage = () => {
     try {
       await deleteLesson(id);
       loadLessons();
+      showToast('Lesson deleted');
     } catch (err) {
       console.error(err);
+      showToast('Failed to delete lesson', 'error');
     }
   };
 
@@ -395,8 +402,10 @@ const CourseManage = () => {
       setSubmissions((prev) =>
         prev.map((s) => (s.id === submissionId ? updated.data : s))
       );
+      showToast('Grade saved');
     } catch (err) {
       console.error(err);
+      showToast('Failed to save grade', 'error');
     } finally {
       setGradingId(null);
     }

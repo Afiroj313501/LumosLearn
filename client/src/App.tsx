@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
 import AdminDashboard from './pages/AdminDashboard';
@@ -12,9 +13,10 @@ import CourseDetail from './pages/CourseDetail';
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></ProtectedRoute>
@@ -31,9 +33,10 @@ function App() {
             <Route path="/course/:courseId" element={
               <ProtectedRoute><CourseDetail /></ProtectedRoute>
             } />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

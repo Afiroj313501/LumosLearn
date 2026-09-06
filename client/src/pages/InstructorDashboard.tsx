@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { getMyCourses, createCourse, deleteCourse } from '../api/courses';
 import type { Course } from '../api/courses';
 import './InstructorDashboard.css';
@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { generateOutline } from '../api/ai';
 import type { OutlineModule } from '../api/ai';
 import TopBar from '../components/TopBar';
+import { useToast } from '../context/ToastContext';
 
 const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -15,6 +16,7 @@ const InstructorDashboard = () => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [showOutlineTool, setShowOutlineTool] = useState(false);
   const [outlineTopic, setOutlineTopic] = useState('');
   const [outlineResult, setOutlineResult] = useState<OutlineModule[]>([]);
@@ -45,8 +47,10 @@ const InstructorDashboard = () => {
       setFormData({ title: '', description: '', category: '' });
       setShowForm(false);
       loadCourses();
+      showToast('Course created');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create course');
+      showToast(err.response?.data?.error || 'Failed to create course', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -57,8 +61,10 @@ const InstructorDashboard = () => {
     try {
       await deleteCourse(id);
       loadCourses();
+      showToast('Course deleted');
     } catch (err) {
       console.error(err);
+      showToast('Failed to delete course', 'error');
     }
   };
 

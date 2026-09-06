@@ -11,6 +11,7 @@ import {
 } from '../api/admin';
 import type { AdminUser, AdminCourse, PlatformStats, PendingInstructor } from '../api/admin';
 import TopBar from '../components/TopBar';
+import { useToast } from '../context/ToastContext';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -20,6 +21,7 @@ const AdminDashboard = () => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [pending, setPending] = useState<PendingInstructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   const loadData = async () => {
     setLoading(true);
@@ -46,8 +48,10 @@ const AdminDashboard = () => {
       await approveInstructor(id);
       setPending((prev) => prev.filter((p) => p.id !== id));
       loadData();
+      showToast('Instructor approved');
     } catch (err) {
       console.error(err);
+      showToast('Failed to approve instructor', 'error');
     }
   };
 
@@ -59,8 +63,10 @@ const AdminDashboard = () => {
     try {
       await updateUserRole(id, role);
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: role as any } : u)));
+      showToast('User role updated');
     } catch (err) {
       console.error(err);
+      showToast('Failed to update user role', 'error');
     }
   };
 
@@ -69,8 +75,10 @@ const AdminDashboard = () => {
     try {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => u.id !== id));
+      showToast('User deleted');
     } catch (err) {
       console.error(err);
+      showToast('Failed to delete user', 'error');
     }
   };
 
@@ -79,8 +87,10 @@ const AdminDashboard = () => {
     try {
       await deleteCourseAdmin(id);
       setCourses((prev) => prev.filter((c) => c.id !== id));
+      showToast('Course deleted');
     } catch (err) {
       console.error(err);
+      showToast('Failed to delete course', 'error');
     }
   };
 
