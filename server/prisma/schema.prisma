@@ -120,8 +120,9 @@ model Question {
   id            String       @id @default(uuid())
   text          String
   type          QuestionType @default(MCQ)
-  options       Json?        // e.g. ["A","B","C","D"] for MCQ
+  options       Json?
   correctAnswer String
+  marks         Int          @default(1)
 
   quizId String
   quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
