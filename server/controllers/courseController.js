@@ -133,3 +133,67 @@ export const deleteCourse = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete course' });
   }
 };
+
+import { Parser } from 'json2csv';
+
+export const exportGradesCSV = async (req, res) => {
+  try {
+    const { id: courseId } = req.params;
+
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      include: { student: true },
+    });
+
+    const assignments = await prisma.assignment.findMany({
+      where: { courseId },
+      include: { submissions: { include: { student: true } } },
+    });
+
+    const quizzes = await prisma.quiz.findMany({
+      where: { lesson: { courseId } },
+      include: { submissions: { include: { student: true } } },
+    });
+
+    const rows = enrollments.map((e) => {
+      const row = {
+        'Student Name': e.student.name,
+        'Student Email': e.student.email,
+        'Progress %': Math.round(e.progressPct),
+        'Course Completed': e.completed ? 'Yes' : 'No',
+      };
+
+      assignments.forEach((a) => {
+        const sub = a.submissions.find((s) => s.studentId === e.studentId);
+        row[`Assignment: ${a.title}`] = sub?.grade != null ? sub.grade : 'Not graded';
+      });
+
+      quizzes.forEach((q) => {
+        const sub = q.submissions.find((s) => s.studentId === e.studentId);
+        row[`Quiz: ${q.title}`] = sub ? Math.round(sub.score) : 'Not taken';
+      });
+
+      return row;
+    });
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'No enrolled students to export' });
+    }
+
+    const parser = new Parser();
+    const csv = parser.parse(rows);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment(`${course.title.replace(/[^a-z0-9]/gi, '_')}_grades.csv`);
+    res.send(csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to export grades' });
+  }
+};
