@@ -9,6 +9,7 @@ import type { RecommendedCourse } from '../api/ai';
 import TopBar from '../components/TopBar';
 import { SkeletonCardGrid } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
+import StarRating from '../components/StarRating';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
@@ -183,6 +184,16 @@ const StudentDashboard = () => {
                   <h3>{c.title}</h3>
                   <p className="course-desc">{c.description}</p>
                   <p className="course-instructor">by {c.instructor?.name}</p>
+                  {c.reviewCount ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <StarRating rating={c.avgRating || 0} />
+                      <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                        ({c.reviewCount})
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>No reviews yet</span>
+                  )}
                   <div className="course-stats">
                     <span>{c._count?.lessons || 0} lessons</span>
                     <span>{c._count?.enrollments || 0} students</span>

@@ -13,6 +13,8 @@ export interface Course {
   _count?: { lessons: number; enrollments: number };
   enrollmentPassword?: string;
   lessonsFinalized?: boolean;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface CourseEnrollment {

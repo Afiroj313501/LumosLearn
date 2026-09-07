@@ -50,10 +50,16 @@ export const getAllCourses = async (req, res) => {
       include: {
         instructor: { select: { name: true } },
         _count: { select: { enrollments: true, lessons: true } },
+        reviews: { select: { rating: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(courses);
+    const sanitized = courses.map(({ enrollmentPassword, reviews, ...rest }) => ({
+      ...rest,
+      avgRating: reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0,
+      reviewCount: reviews.length,
+    }));
+    res.json(sanitized);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch courses' });

@@ -15,11 +15,14 @@ import { getAnnouncementsByCourse } from '../api/announcement';
 import type { Announcement } from '../api/announcement';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
+import { getCourseReviews, createReview, getMyReview } from '../api/review';
+import type { Review } from '../api/review';
 import { summarizeLesson } from '../api/lessons';
 import StudyAssistant from '../components/StudyAssistant';
 import TopBar from '../components/TopBar';
 import { SkeletonLine } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
+import StarRating from '../components/StarRating';
 import './CourseDetail.css';
 
 const getEmbedUrl = (url: string) => {
@@ -67,6 +70,13 @@ const CourseDetail = () => {
   const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState('');
 
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
   const loadData = async () => {
     if (!courseId) return;
     try {
@@ -96,6 +106,19 @@ const CourseDetail = () => {
 
       const annRes = await getAnnouncementsByCourse(courseId);
       setAnnouncements(annRes.data);
+
+      const reviewsRes = await getCourseReviews(courseId);
+      setReviews(reviewsRes.data.reviews);
+      setAvgRating(reviewsRes.data.avgRating);
+
+      if (user?.role === 'STUDENT') {
+        const myRevRes = await getMyReview(courseId);
+        setMyReview(myRevRes.data);
+        if (myRevRes.data) {
+          setReviewRating(myRevRes.data.rating);
+          setReviewComment(myRevRes.data.comment || '');
+        }
+      }
 
       if (user?.role === 'STUDENT') {
         const subResults = await Promise.all(
@@ -291,6 +314,22 @@ const CourseDetail = () => {
       setSummaryError(err.response?.data?.error || 'Failed to generate summary');
     } finally {
       setSummarizingId(null);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!courseId || reviewRating === 0) return;
+    setSubmittingReview(true);
+    try {
+      const res = await createReview(courseId, reviewRating, reviewComment);
+      setMyReview(res.data);
+      const reviewsRes = await getCourseReviews(courseId);
+      setReviews(reviewsRes.data.reviews);
+      setAvgRating(reviewsRes.data.avgRating);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -703,6 +742,62 @@ const CourseDetail = () => {
             })}
           </div>
         </>
+      )}
+
+      <h2 className="lessons-heading" style={{ marginTop: '40px' }}>
+        Reviews {reviews.length > 0 && <StarRating rating={avgRating} size={16} />}
+      </h2>
+
+      {user?.role === 'STUDENT' && enrolled && progressPct >= 100 && (
+        <div className="lesson-form" style={{ marginBottom: '24px' }}>
+          <p className="dash-eyebrow" style={{ margin: '0 0 4px' }}>
+            {myReview ? 'Update your review' : 'Leave a review'}
+          </p>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span
+                key={i}
+                onClick={() => setReviewRating(i)}
+                style={{
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: i <= reviewRating ? 'var(--accent-lumen)' : 'var(--text-muted)',
+                }}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+          <textarea
+            placeholder="Share your thoughts about this course (optional)"
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            rows={3}
+          />
+          <button
+            className="btn-solid"
+            onClick={handleSubmitReview}
+            disabled={submittingReview || reviewRating === 0}
+          >
+            {submittingReview ? 'Saving...' : myReview ? 'Update review' : 'Submit review'}
+          </button>
+        </div>
+      )}
+
+      {reviews.length === 0 ? (
+        <EmptyState icon="inbox" title="No reviews yet" subtitle="Be the first to share your experience with this course." />
+      ) : (
+        <div className="lesson-list">
+          {reviews.map((r) => (
+            <div className="lesson-item-detail" key={r.id} style={{ padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.student.name}</span>
+                <StarRating rating={r.rating} />
+              </div>
+              {r.comment && <p className="lesson-text">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
       )}
 
       {courseId && (enrolled || user?.role !== 'STUDENT') && (

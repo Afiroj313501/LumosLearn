@@ -27,6 +27,7 @@ model User {
   approved     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  reviews Review[]
 
   coursesTaught Course[]      @relation("InstructorCourses")
   enrollments   Enrollment[]
@@ -46,6 +47,7 @@ model Course {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   announcements Announcement[]
+  reviews Review[]
 
   instructorId String
   instructor   User @relation("InstructorCourses", fields: [instructorId], references: [id])
@@ -195,4 +197,19 @@ model Announcement {
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
 }
