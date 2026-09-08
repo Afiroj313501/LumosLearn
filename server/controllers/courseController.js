@@ -163,6 +163,81 @@ export const getCourseEnrollments = async (req, res) => {
   }
 };
 
+export const getCourseAnalytics = async (req, res) => {
+  try {
+    const { id: courseId } = req.params;
+
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (course.instructorId !== req.user.userId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      select: { enrolledAt: true, completed: true, progressPct: true },
+      orderBy: { enrolledAt: 'asc' },
+    });
+
+    const enrollmentByDate = {};
+    enrollments.forEach((enrollment) => {
+      const date = new Date(enrollment.enrolledAt).toISOString().slice(0, 10);
+      enrollmentByDate[date] = (enrollmentByDate[date] || 0) + 1;
+    });
+    let cumulative = 0;
+    const enrollmentTrend = Object.keys(enrollmentByDate)
+      .sort()
+      .map((date) => {
+        cumulative += enrollmentByDate[date];
+        return { date, count: cumulative };
+      });
+
+    const totalEnrolled = enrollments.length;
+    const totalCompleted = enrollments.filter((enrollment) => enrollment.completed).length;
+    const completionRate = totalEnrolled > 0 ? (totalCompleted / totalEnrolled) * 100 : 0;
+    const avgProgress = totalEnrolled > 0
+      ? enrollments.reduce((sum, enrollment) => sum + enrollment.progressPct, 0) / totalEnrolled
+      : 0;
+
+    const quizzes = await prisma.quiz.findMany({
+      where: { lesson: { courseId } },
+      include: { submissions: true },
+    });
+    const quizStats = quizzes.map((quiz) => ({
+      title: quiz.title,
+      avgScore: quiz.submissions.length > 0
+        ? quiz.submissions.reduce((sum, submission) => sum + submission.score, 0) / quiz.submissions.length
+        : 0,
+      attempts: quiz.submissions.length,
+    }));
+
+    const assignments = await prisma.assignment.findMany({
+      where: { courseId },
+      include: { submissions: true },
+    });
+    const totalAssignmentSubmissions = assignments.reduce((sum, assignment) => sum + assignment.submissions.length, 0);
+    const gradedSubmissions = assignments.reduce(
+      (sum, assignment) => sum + assignment.submissions.filter((submission) => submission.grade != null).length,
+      0
+    );
+
+    res.json({
+      totalEnrolled,
+      totalCompleted,
+      completionRate,
+      avgProgress,
+      enrollmentTrend,
+      quizStats,
+      totalAssignmentSubmissions,
+      gradedSubmissions,
+      pendingGrading: totalAssignmentSubmissions - gradedSubmissions,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+};
+
 import { Parser } from 'json2csv';
 
 export const exportGradesCSV = async (req, res) => {
