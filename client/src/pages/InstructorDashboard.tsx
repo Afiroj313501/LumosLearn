@@ -14,7 +14,7 @@ const InstructorDashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', description: '', category: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', category: '', enrollmentPassword: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -46,13 +46,12 @@ const InstructorDashboard = () => {
     setSubmitting(true);
     try {
       await createCourse(formData);
-      setFormData({ title: '', description: '', category: '' });
+      setFormData({ title: '', description: '', category: '', enrollmentPassword: '' });
       setShowForm(false);
       loadCourses();
       showToast('Course created');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create course');
-      showToast(err.response?.data?.error || 'Failed to create course', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -80,6 +79,7 @@ const InstructorDashboard = () => {
     try {
       const res = await generateOutline(outlineTopic, 5);
       setOutlineResult(res.data.outline);
+      showToast('Outline generated');
     } catch (err: any) {
       setOutlineError(err.response?.data?.error || 'Failed to generate outline');
     } finally {
@@ -88,7 +88,7 @@ const InstructorDashboard = () => {
   };
 
   const handleUseModuleAsCourse = (mod: OutlineModule) => {
-    setFormData({ title: mod.title, description: mod.description, category: '' });
+    setFormData({ title: mod.title, description: mod.description, category: '', enrollmentPassword: '' });
     setShowForm(true);
     setShowOutlineTool(false);
   };
@@ -168,6 +168,12 @@ const InstructorDashboard = () => {
             placeholder="Category (optional)"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          />
+          <input
+            type="password"
+            placeholder="Enrollment password (optional)"
+            value={formData.enrollmentPassword}
+            onChange={(e) => setFormData({ ...formData, enrollmentPassword: e.target.value })}
           />
           <button type="submit" className="btn-solid" disabled={submitting}>
             {submitting ? 'Creating…' : 'Create course'}

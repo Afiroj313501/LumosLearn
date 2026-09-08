@@ -65,10 +65,10 @@ const AdminDashboard = () => {
     try {
       await updateUserRole(id, role);
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: role as any } : u)));
-      showToast('User role updated');
+      showToast('Role updated');
     } catch (err) {
       console.error(err);
-      showToast('Failed to update user role', 'error');
+      showToast('Failed to update role', 'error');
     }
   };
 
