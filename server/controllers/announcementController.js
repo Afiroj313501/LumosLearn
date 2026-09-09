@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { sendEmail, announcementEmail } from '../services/emailService.js';
+import { notifyMany } from '../services/notificationService.js';
 
 export const createAnnouncement = async (req, res) => {
   try {
@@ -38,6 +39,13 @@ export const createAnnouncement = async (req, res) => {
         )
       )
     ).catch((err) => console.error('Bulk announcement email error:', err));
+
+    notifyMany(
+      enrollments.map((e) => e.studentId),
+      'announcement',
+      `New announcement in ${course.title}`,
+      `/course/${courseId}`
+    );
 
     res.status(201).json(announcement);
   } catch (err) {

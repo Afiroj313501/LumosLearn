@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { sendEmail, gradeEmail } from '../services/emailService.js';
+import { notify } from '../services/notificationService.js';
 
 export const createAssignment = async (req, res) => {
   try {
@@ -178,6 +179,13 @@ export const gradeSubmission = async (req, res) => {
         `Grade posted: ${submission.assignment.title}`,
         gradeEmail(submission.assignment.title, submission.assignment.course.title, grade, feedback)
       ).catch((err) => console.error('Grade email error:', err));
+
+      notify(
+        submission.studentId,
+        'grade',
+        `You received ${grade}% on "${submission.assignment.title}"`,
+        `/course/${submission.assignment.course.id}`
+      );
     }
 
     res.json(updated);
