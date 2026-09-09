@@ -28,6 +28,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   reviews Review[]
+  notifications Notification[]
 
   coursesTaught Course[]      @relation("InstructorCourses")
   enrollments   Enrollment[]
@@ -212,4 +213,16 @@ model Review {
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, courseId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
