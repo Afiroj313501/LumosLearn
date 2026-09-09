@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import NotificationBell from './NotificationBell';
 
 const TopBar = ({ onLogoClick }: { onLogoClick?: () => void }) => {
   const { user, logout } = useAuth();
@@ -25,6 +26,7 @@ const TopBar = ({ onLogoClick }: { onLogoClick?: () => void }) => {
         Lumen<em>Learner</em>
       </a>
       <div className="top-bar-actions">
+        {user && <NotificationBell />}
         <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle theme" title="Toggle theme">
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
