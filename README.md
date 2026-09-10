@@ -137,8 +137,9 @@ The app will be available at `http://localhost:5173`, with the API running at `h
 
 ## Author
 
-Built by **Firoj Abdullah** as a capstone project at United International University (UIU).
+Built by **Abdullah Firoj** as a capstone project at United International University (UIU).
 
 ## License
 
 This project is currently unlicensed / for academic use. Add a license (e.g. MIT) here if you plan to open-source it.
+done
