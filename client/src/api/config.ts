@@ -1,1 +1,1 @@
-export const API_ORIGIN = 'http://localhost:5000';
+export const API_ORIGIN = 'https://lumoslearn.onrender.com';
