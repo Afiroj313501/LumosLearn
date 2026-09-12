@@ -866,7 +866,7 @@ const CourseManage = () => {
                         <div className="submission-row-full" key={s.id}>
                           <div className="submission-row">
                             <span>{s.student?.name}</span>
-                            <a href={`${API_ORIGIN}${s.fileUrl}`} target="_blank" rel="noreferrer">
+                            <a href={s.fileUrl} target="_blank" rel="noreferrer">
                               {s.fileName}
                             </a>
                             <span className="submission-date">

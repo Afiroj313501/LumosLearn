@@ -1,29 +1,36 @@
 import multer from 'multer';
-import path from 'path';
 import crypto from 'crypto';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const unique = crypto.randomUUID();
-    cb(null, `${unique}${path.extname(file.originalname)}`);
+const allowedTypes = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.zip', '.png', '.jpg', '.jpeg'];
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const ext = file.originalname.split('.').pop();
+    return {
+      folder: 'lumenlearner_uploads',
+      resource_type: 'raw',
+      public_id: `${Date.now()}-${crypto.randomUUID()}`,
+      format: ext,
+    };
   },
 });
 
-const allowedTypes = ['.pdf', '.ppt', '.pptx', '.doc', '.docx', '.zip', '.png', '.jpg', '.jpeg'];
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
+  const ext = '.' + file.originalname.split('.').pop().toLowerCase();
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only allowed file types are PDF, PPT, PPTX, DOC, DOCX, ZIP, PNG, JPG, and JPEG'));
+    cb(new Error('Only PDF, PPT/PPTX, DOC/DOCX, ZIP, and image files are allowed'));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 20 * 1024 * 1024 },
 });
 
 export default upload;

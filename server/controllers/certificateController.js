@@ -3,6 +3,8 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import os from 'os';
+import cloudinary from '../config/cloudinary.js';
 
 export const issueCertificate = async (req, res) => {
   try {
@@ -54,20 +56,29 @@ export const issueCertificate = async (req, res) => {
     if (existing) return res.json(existing);
 
     const fileName = `${crypto.randomUUID()}.pdf`;
-    const filePath = path.join('certificates', fileName);
+    const tempPath = path.join(os.tmpdir(), fileName);
 
-    await generateCertificatePDF(filePath, {
+    await generateCertificatePDF(tempPath, {
       studentName: enrollment.student.name,
       courseTitle: course.title,
-      instructorName: course.instructor.name,   
+      instructorName: course.instructor.name,
       date: new Date(),
     });
+
+    const uploadResult = await cloudinary.uploader.upload(tempPath, {
+      folder: 'lumenlearner_certificates',
+      resource_type: 'raw',
+      public_id: fileName.replace('.pdf', ''),
+      format: 'pdf',
+    });
+
+    fs.unlinkSync(tempPath);
 
     const certificate = await prisma.certificate.create({
       data: {
         studentId: req.user.userId,
         courseId,
-        fileUrl: `/certificates/${fileName}`,
+        fileUrl: uploadResult.secure_url,
       },
     });
 

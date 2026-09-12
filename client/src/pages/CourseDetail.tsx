@@ -406,7 +406,7 @@ const CourseDetail = () => {
           {progressPct >= 100 && (
             certificate ? (
               <a
-                href={`${API_ORIGIN}${certificate.fileUrl}`}
+                href={certificate.fileUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-solid"
@@ -511,7 +511,7 @@ const CourseDetail = () => {
 
                     {l.fileUrl && (
                       <a
-                        href={`${API_ORIGIN}${l.fileUrl}`}
+                        href={l.fileUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="file-download-link"
