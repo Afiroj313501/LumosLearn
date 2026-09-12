@@ -17,7 +17,6 @@ import { getQuizByLesson, createQuiz, deleteQuiz as deleteQuizApi, generateQuizA
 import type { Quiz, QuizQuestion, QuizResultRow } from '../api/quizzes';
 import { getAnnouncementsByCourse, createAnnouncement, deleteAnnouncement } from '../api/announcement';
 import type { Announcement } from '../api/announcement';
-import { API_ORIGIN } from '../api/config';
 import TopBar from '../components/TopBar';
 import { useToast } from '../context/ToastContext';
 import { SkeletonRow } from '../components/Skeleton';

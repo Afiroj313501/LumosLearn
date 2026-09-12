@@ -1,4 +1,5 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import type { Role } from '../context/AuthContext';

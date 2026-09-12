@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import './EmptyState.css';
 
 interface EmptyStateProps {
@@ -6,7 +7,7 @@ interface EmptyStateProps {
   subtitle?: string;
 }
 
-const icons: Record<string, JSX.Element> = {
+const icons: Record<string, ReactElement> = {
   course: (
     <svg viewBox="0 0 64 64" fill="none">
       <rect x="10" y="16" width="44" height="34" rx="4" stroke="currentColor" strokeWidth="2" />

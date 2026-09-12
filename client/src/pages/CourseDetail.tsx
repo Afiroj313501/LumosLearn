@@ -4,7 +4,6 @@ import { getCourseById } from '../api/courses';
 import type { Course } from '../api/courses';
 import { enrollInCourse, checkEnrollment } from '../api/enrollments';
 import { useAuth } from '../context/AuthContext';
-import { API_ORIGIN } from '../api/config';
 import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
 import { uploadFile } from '../api/upload';
