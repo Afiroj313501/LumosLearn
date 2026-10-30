@@ -4,6 +4,7 @@ import { getCourseById } from '../api/courses';
 import type { Course } from '../api/courses';
 import { enrollInCourse, checkEnrollment } from '../api/enrollments';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { getAssignmentsByCourse, submitAssignment, getMySubmission } from '../api/assignments';
 import type { Assignment, Submission } from '../api/assignments';
 import { uploadFile } from '../api/upload';
@@ -14,7 +15,7 @@ import { getAnnouncementsByCourse } from '../api/announcement';
 import type { Announcement } from '../api/announcement';
 import { issueCertificate, getMyCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
-import { getCourseReviews, createReview, getMyReview } from '../api/review';
+import { getCourseReviews, createReview, getMyReview, deleteReview } from '../api/review';
 import type { Review } from '../api/review';
 import { summarizeLesson } from '../api/lessons';
 import StudyAssistant from '../components/StudyAssistant';
@@ -34,6 +35,7 @@ const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [course, setCourse] = useState<Course | null>(null);
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,9 @@ const CourseDetail = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [isEditingReview, setIsEditingReview] = useState(false);
+  const [isAddingReview, setIsAddingReview] = useState(false);
+  const [deletingReview, setDeletingReview] = useState(false);
 
   const loadData = async () => {
     if (!courseId) return;
@@ -320,15 +325,43 @@ const CourseDetail = () => {
     if (!courseId || reviewRating === 0) return;
     setSubmittingReview(true);
     try {
+      const isUpdate = !!myReview;
       const res = await createReview(courseId, reviewRating, reviewComment);
       setMyReview(res.data);
+      setIsEditingReview(false);
+      setIsAddingReview(false);
       const reviewsRes = await getCourseReviews(courseId);
       setReviews(reviewsRes.data.reviews);
       setAvgRating(reviewsRes.data.avgRating);
+      showToast(isUpdate ? 'Review updated successfully!' : 'Thank you for your review!', 'success');
     } catch (err: any) {
       console.error(err);
+      showToast(err.response?.data?.error || 'Failed to save review', 'error');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!courseId || !myReview) return;
+    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    setDeletingReview(true);
+    try {
+      await deleteReview(courseId);
+      setMyReview(null);
+      setReviewRating(0);
+      setReviewComment('');
+      setIsEditingReview(false);
+      setIsAddingReview(false);
+      const reviewsRes = await getCourseReviews(courseId);
+      setReviews(reviewsRes.data.reviews);
+      setAvgRating(reviewsRes.data.avgRating);
+      showToast('Your review was deleted', 'info');
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.response?.data?.error || 'Failed to delete review', 'error');
+    } finally {
+      setDeletingReview(false);
     }
   };
 
@@ -754,61 +787,222 @@ const CourseDetail = () => {
         </>
       )}
 
-      <h2 className="lessons-heading" style={{ marginTop: '40px' }}>
-        Reviews {reviews.length > 0 && <StarRating rating={avgRating} size={16} />}
-      </h2>
+      <div className="reviews-section-header">
+        <h2 className="lessons-heading" style={{ margin: 0 }}>
+          Reviews {reviews.length > 0 && <StarRating rating={avgRating} size={16} />}
+        </h2>
 
-      {user?.role === 'STUDENT' && enrolled && progressPct >= 100 && (
-        <div className="lesson-form" style={{ marginBottom: '24px' }}>
-          <p className="dash-eyebrow" style={{ margin: '0 0 4px' }}>
-            {myReview ? 'Update your review' : 'Leave a review'}
-          </p>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <span
-                key={i}
-                onClick={() => setReviewRating(i)}
-                style={{
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: i <= reviewRating ? 'var(--accent-lumen)' : 'var(--text-muted)',
-                }}
-              >
-                ★
-              </span>
-            ))}
+        {user?.role === 'STUDENT' && enrolled && progressPct >= 100 && !myReview && !isAddingReview && (
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              setReviewRating(5);
+              setReviewComment('');
+              setIsAddingReview(true);
+            }}
+          >
+            ★ Write a review
+          </button>
+        )}
+      </div>
+
+      {/* New Review Composer Card (only shown on demand when student clicks 'Write a review') */}
+      {user?.role === 'STUDENT' && enrolled && progressPct >= 100 && !myReview && isAddingReview && (
+        <div className="review-composer-card">
+          <div className="composer-header">
+            <h4>Share your feedback</h4>
+            <button
+              className="btn-ghost"
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+              onClick={() => setIsAddingReview(false)}
+            >
+              ✕ Cancel
+            </button>
           </div>
+
+          <div className="star-picker-row">
+            <span className="star-picker-label">Rating:</span>
+            <div className="star-picker">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <span
+                  key={i}
+                  className={`star-choice ${i <= reviewRating ? 'active' : ''}`}
+                  onClick={() => setReviewRating(i)}
+                  title={`${i} star${i > 1 ? 's' : ''}`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            {reviewRating > 0 && (
+              <span className="rating-num-label">{reviewRating} / 5 stars</span>
+            )}
+          </div>
+
           <textarea
-            placeholder="Share your thoughts about this course (optional)"
+            className="review-textarea"
+            placeholder="Share your experience with this course, what you learned, or how it helped you (optional)..."
             value={reviewComment}
             onChange={(e) => setReviewComment(e.target.value)}
             rows={3}
           />
-          <button
-            className="btn-solid"
-            onClick={handleSubmitReview}
-            disabled={submittingReview || reviewRating === 0}
-          >
-            {submittingReview ? 'Saving...' : myReview ? 'Update review' : 'Submit review'}
-          </button>
+
+          <div className="review-action-row">
+            <button
+              className="btn-solid"
+              onClick={handleSubmitReview}
+              disabled={submittingReview || reviewRating === 0}
+            >
+              {submittingReview ? 'Submitting...' : 'Post review'}
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={() => setIsAddingReview(false)}
+              disabled={submittingReview}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      {reviews.length === 0 ? (
-        <EmptyState icon="inbox" title="No reviews yet" subtitle="Be the first to share your experience with this course." />
-      ) : (
-        <div className="lesson-list">
-          {reviews.map((r) => (
-            <div className="lesson-item-detail" key={r.id} style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.student.name}</span>
-                <StarRating rating={r.rating} />
-              </div>
-              {r.comment && <p className="lesson-text">{r.comment}</p>}
+      {/* Student's Existing Review Card with Edit & Delete Actions */}
+      {user?.role === 'STUDENT' && enrolled && myReview && (
+        <div className="my-review-card">
+          <div className="my-review-header">
+            <div className="my-review-badge-group">
+              <span className="your-review-pill">Your Review</span>
+              <StarRating rating={myReview.rating} size={15} />
+              <span className="review-date-text">
+                {new Date(myReview.createdAt).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
             </div>
-          ))}
+
+            {!isEditingReview && (
+              <div className="my-review-actions">
+                <button
+                  className="btn-ghost"
+                  style={{ padding: '6px 12px', fontSize: '12.5px' }}
+                  onClick={() => {
+                    setReviewRating(myReview.rating);
+                    setReviewComment(myReview.comment || '');
+                    setIsEditingReview(true);
+                  }}
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  className="btn-ghost btn-delete-review"
+                  style={{ padding: '6px 12px', fontSize: '12.5px' }}
+                  onClick={handleDeleteReview}
+                  disabled={deletingReview}
+                >
+                  {deletingReview ? 'Deleting...' : '🗑️ Delete'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!isEditingReview ? (
+            <p className="my-review-comment">
+              {myReview.comment || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No written feedback provided.</span>}
+            </p>
+          ) : (
+            <div className="review-edit-form">
+              <div className="star-picker-row">
+                <span className="star-picker-label">Rating:</span>
+                <div className="star-picker">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span
+                      key={i}
+                      className={`star-choice ${i <= reviewRating ? 'active' : ''}`}
+                      onClick={() => setReviewRating(i)}
+                      title={`${i} star${i > 1 ? 's' : ''}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                {reviewRating > 0 && (
+                  <span className="rating-num-label">{reviewRating} / 5 stars</span>
+                )}
+              </div>
+
+              <textarea
+                className="review-textarea"
+                placeholder="Update your feedback about this course..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                rows={3}
+              />
+
+              <div className="review-action-row">
+                <button
+                  className="btn-solid"
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview || reviewRating === 0}
+                >
+                  {submittingReview ? 'Saving changes...' : 'Save changes'}
+                </button>
+                <button
+                  className="btn-ghost"
+                  onClick={() => {
+                    setIsEditingReview(false);
+                    setReviewRating(myReview.rating);
+                    setReviewComment(myReview.comment || '');
+                  }}
+                  disabled={submittingReview}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Other Reviews or All Reviews */}
+      {(() => {
+        const otherReviews = myReview ? reviews.filter((r) => r.id !== myReview.id) : reviews;
+        if (otherReviews.length === 0 && !myReview) {
+          return (
+            <EmptyState
+              icon="inbox"
+              title="No reviews yet"
+              subtitle="Be the first to share your experience with this course."
+            />
+          );
+        }
+
+        if (otherReviews.length === 0 && myReview) {
+          return null;
+        }
+
+        return (
+          <div className="lesson-list">
+            {otherReviews.map((r) => (
+              <div className="lesson-item-detail" key={r.id} style={{ padding: '16px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {r.student.name}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <StarRating rating={r.rating} />
+                    <span className="review-date-text" style={{ fontSize: '11px' }}>
+                      {new Date(r.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                {r.comment && <p className="lesson-text">{r.comment}</p>}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {courseId && (enrolled || user?.role !== 'STUDENT') && (
         <StudyAssistant courseId={courseId} />

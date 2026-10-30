@@ -16,3 +16,6 @@ export const createReview = (courseId: string, rating: number, comment?: string)
 
 export const getMyReview = (courseId: string) =>
   api.get<Review | null>(`/reviews/course/${courseId}/mine`);
+
+export const deleteReview = (courseId: string) =>
+  api.delete(`/reviews/course/${courseId}`);

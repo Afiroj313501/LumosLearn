@@ -61,3 +61,16 @@ export const getMyReview = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch review' });
   }
 };
+
+export const deleteReview = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    await prisma.review.deleteMany({
+      where: { studentId: req.user.userId, courseId },
+    });
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+};

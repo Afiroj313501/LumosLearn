@@ -685,3 +685,198 @@ html[data-theme="light"] .lesson-quiz-tag {
     padding: 16px;
   }
 }
+
+
+/* ==========================================================================
+   Reviews Header & Inline Action Bar
+   ========================================================================== */
+.reviews-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 40px 0 20px;
+}
+
+/* Review Composer / Form Card (when writing or editing review) */
+.review-composer-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.composer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composer-header h4 {
+  font-family: var(--font-content, Georgia, serif);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.star-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.star-picker-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.star-picker {
+  display: flex;
+  gap: 4px;
+}
+
+.star-choice {
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--border-color-strong);
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.star-choice:hover {
+  transform: scale(1.15);
+}
+
+.star-choice.active {
+  color: var(--accent-lumen);
+}
+
+html[data-theme="light"] .star-choice.active {
+  color: #d97706;
+}
+
+.rating-num-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-lumen);
+}
+
+html[data-theme="light"] .rating-num-label {
+  color: #b45309;
+}
+
+.review-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: var(--font-ui, 'Sora', sans-serif);
+  font-size: 13.5px;
+  color: var(--text-primary);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.review-textarea:focus {
+  border-color: var(--accent-lumen);
+}
+
+.review-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Existing User Review Card (Compact & Highlighted) */
+.my-review-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(242, 184, 75, 0.35);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 18px rgba(242, 184, 75, 0.08);
+}
+
+html[data-theme="light"] .my-review-card {
+  border-color: rgba(217, 119, 6, 0.3);
+  box-shadow: 0 4px 18px rgba(217, 119, 6, 0.06);
+}
+
+.my-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.my-review-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.your-review-pill {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-lumen);
+  background: rgba(242, 184, 75, 0.15);
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+html[data-theme="light"] .your-review-pill {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.review-date-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.my-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-delete-review {
+  color: #ff5f56 !important;
+  border-color: rgba(255, 95, 86, 0.3) !important;
+}
+
+.btn-delete-review:hover {
+  background: rgba(255, 95, 86, 0.1) !important;
+  border-color: #ff5f56 !important;
+}
+
+.my-review-comment {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.review-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
