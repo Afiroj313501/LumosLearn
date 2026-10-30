@@ -13,7 +13,7 @@ import { getQuizByLesson, submitQuiz, getMyQuizSubmission, getQuizReview, forfei
 import type { Quiz, QuizSubmission, QuizReviewItem } from '../api/quizzes';
 import { getAnnouncementsByCourse } from '../api/announcement';
 import type { Announcement } from '../api/announcement';
-import { issueCertificate, getMyCertificate } from '../api/certificate';
+import { issueCertificate, getMyCertificate, downloadCertificate } from '../api/certificate';
 import type { Certificate } from '../api/certificate';
 import { getCourseReviews, createReview, getMyReview, deleteReview } from '../api/review';
 import type { Review } from '../api/review';
@@ -65,6 +65,7 @@ const CourseDetail = () => {
 
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [issuingCert, setIssuingCert] = useState(false);
+  const [downloadingCert, setDownloadingCert] = useState(false);
   const [certError, setCertError] = useState('');
 
   const [summaries, setSummaries] = useState<Record<string, string>>({});
@@ -308,6 +309,27 @@ const CourseDetail = () => {
     }
   };
 
+  const handleDownloadCertificate = async () => {
+    if (!certificate) return;
+    setCertError('');
+    setDownloadingCert(true);
+    try {
+      const res = await downloadCertificate(certificate.id);
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `certificate-${certificate.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setCertError(err.response?.data?.error || 'Failed to download certificate');
+    } finally {
+      setDownloadingCert(false);
+    }
+  };
+
   const handleSummarize = async (lessonId: string) => {
     setSummaryError('');
     setSummarizingId(lessonId);
@@ -440,14 +462,14 @@ const CourseDetail = () => {
             {progressPct >= 100 && (
               <div className="certificate-action-row">
                 {certificate ? (
-                  <a
-                    href={certificate.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={handleDownloadCertificate}
+                    disabled={downloadingCert}
                     className="btn-solid btn-cert-download"
                   >
-                    🎓 Download Official Certificate
-                  </a>
+                    {downloadingCert ? 'Downloading...' : '🎓 Download Official Certificate'}
+                  </button>
                 ) : course.lessonsFinalized ? (
                   <>
                     {certError && <p className="form-error">{certError}</p>}

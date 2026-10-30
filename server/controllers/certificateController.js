@@ -133,6 +133,54 @@ export const getMyCertificate = async (req, res) => {
   }
 };
 
+export const downloadCertificate = async (req, res) => {
+  let tempPath;
+  try {
+    const certificate = await prisma.certificate.findFirst({
+      where: {
+        id: req.params.certificateId,
+        studentId: req.user.userId,
+      },
+      include: {
+        student: true,
+        course: { include: { instructor: true } },
+      },
+    });
+
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    const fileName = `certificate-${certificate.id}.pdf`;
+    tempPath = path.join(os.tmpdir(), fileName);
+    await generateCertificatePDF(tempPath, {
+      studentName: certificate.student.name,
+      courseTitle: certificate.course.title,
+      instructorName: certificate.course.instructor.name,
+      date: certificate.issuedAt,
+    });
+
+    res.download(tempPath, fileName, (err) => {
+      fs.unlink(tempPath, (unlinkError) => {
+        if (unlinkError) console.error(unlinkError);
+      });
+
+      if (err && !res.headersSent) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to download certificate' });
+      }
+    });
+  } catch (err) {
+    if (tempPath) {
+      fs.unlink(tempPath, (unlinkError) => {
+        if (unlinkError) console.error(unlinkError);
+      });
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Failed to download certificate' });
+  }
+};
+
 function generateCertificatePDF(filePath, { studentName, courseTitle, instructorName, date }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ layout: 'landscape', size: 'A4', margin: 0 });

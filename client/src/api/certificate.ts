@@ -11,3 +11,8 @@ export const issueCertificate = (courseId: string) =>
 
 export const getMyCertificate = (courseId: string) =>
   api.get<Certificate | null>(`/certificates/course/${courseId}`);
+
+export const downloadCertificate = (certificateId: string) =>
+  api.get<Blob>(`/certificates/${certificateId}/download`, {
+    responseType: 'blob',
+  });
