@@ -9,6 +9,8 @@ type Mode = 'login' | 'register';
 
 interface AuthModalProps {
   onClose: () => void;
+  initialMode?: Mode;
+  initialRole?: Role;
 }
 
 interface FormData {
@@ -18,13 +20,13 @@ interface FormData {
   role: Role;
 }
 
-const AuthModal = ({ onClose }: AuthModalProps) => {
-  const [mode, setMode] = useState<Mode>('login');
+const AuthModal = ({ onClose, initialMode = 'login', initialRole = 'STUDENT' }: AuthModalProps) => {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     password: '',
-    role: 'STUDENT',
+    role: initialRole,
   });
   const [error, setError] = useState('');
   const [pendingMessage, setPendingMessage] = useState('');
