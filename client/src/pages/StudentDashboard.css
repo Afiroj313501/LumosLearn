@@ -22,7 +22,8 @@
 .dash-tabs {
   display: flex;
   gap: 4px;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 4px;
   width: fit-content;
@@ -59,7 +60,8 @@
 
 .course-card {
   background: var(--bg-panel);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px var(--shadow-color);
   border-radius: 16px;
   padding: 22px;
   display: flex;
@@ -113,7 +115,7 @@
 .progress-bar-track {
   width: 100%;
   height: 6px;
-  background: rgba(255,255,255,0.08);
+  background: var(--surface-1);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 6px;
@@ -134,7 +136,7 @@
 .recommendations-section {
   margin-bottom: 40px;
   padding-bottom: 32px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .ai-reason {
@@ -174,8 +176,8 @@
 .search-input {
   flex: 1;
   min-width: 200px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 10px;
   padding: 11px 14px;
   font-family: 'Sora', sans-serif;
@@ -186,8 +188,8 @@
 .search-input:focus { border-color: var(--accent-lumen); }
 
 .category-select {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 10px;
   padding: 11px 14px;
   font-family: 'Sora', sans-serif;
@@ -198,4 +200,18 @@
 .category-select option {
   background: var(--bg-panel);
   color: var(--text-primary);
+}
+
+html[data-theme="light"] .dtab.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+}
+
+html[data-theme="light"] .course-card {
+  background: #ffffff;
+}
+
+html[data-theme="light"] .search-input,
+html[data-theme="light"] .category-select {
+  background: #ffffff;
 }

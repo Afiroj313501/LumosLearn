@@ -36,7 +36,8 @@
 
 .lesson-form {
   background: var(--bg-panel);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px var(--shadow-color);
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -48,8 +49,8 @@
 
 .lesson-form input,
 .lesson-form textarea {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 10px;
   padding: 12px 14px;
   font-family: 'Sora', sans-serif;
@@ -90,7 +91,8 @@
   align-items: flex-start;
   gap: 18px;
   background: var(--bg-panel);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px var(--shadow-color);
   border-radius: 14px;
   padding: 20px;
 }
@@ -237,8 +239,8 @@
 }
 
 .quiz-builder > input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 10px;
   padding: 11px 14px;
   font-family: 'Sora', sans-serif;
@@ -268,8 +270,8 @@
 
 .quiz-question-block input,
 .quiz-select {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 8px;
   padding: 9px 12px;
   font-family: 'Sora', sans-serif;
@@ -314,8 +316,8 @@
 
 .grade-input {
   width: 70px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 8px;
   padding: 7px 10px;
   font-family: 'Sora', sans-serif;
@@ -326,8 +328,8 @@
 
 .feedback-input {
   flex: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 8px;
   padding: 7px 10px;
   font-family: 'Sora', sans-serif;

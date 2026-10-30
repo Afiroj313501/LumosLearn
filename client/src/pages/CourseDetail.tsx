@@ -357,95 +357,98 @@ const CourseDetail = () => {
     <div className="page-shell course-detail">
       <TopBar />
       <div className="course-detail-content">
-        <button className="btn-back" onClick={handleBackClick}>Back</button>
-
-      <span className="course-category">{course.category || 'General'}</span>
-      <h1>{course.title}</h1>
-      <p className="course-instructor">by {course.instructor?.name}</p>
-      <p className="course-desc-full">{course.description}</p>
-
-      {user?.role === 'STUDENT' && !enrolled && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-          {enrollError && <p className="form-error">{enrollError}</p>}
-          <input
-            type="password"
-            placeholder="Enrollment password (if required)"
-            value={enrollPasswordInput}
-            onChange={(e) => setEnrollPasswordInput(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.09)',
-              borderRadius: '10px',
-              padding: '11px 14px',
-              fontFamily: 'Sora, sans-serif',
-              fontSize: '13.5px',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              maxWidth: '280px',
-            }}
-          />
-          <button className="btn-solid" onClick={handleEnroll} disabled={enrolling} style={{ width: 'fit-content' }}>
-            {enrolling ? 'Enrolling...' : 'Enroll in this course'}
+        <div className="course-nav-bar">
+          <button className="btn-back" onClick={handleBackClick}>
+            ← Back to Dashboard
           </button>
         </div>
-      )}
-      {user?.role === 'STUDENT' && enrolled && (
-        <button className="btn-solid" disabled style={{ marginBottom: '20px' }}>
-          Enrolled
-        </button>
-      )}
 
-      {user?.role === 'STUDENT' && enrolled && (
-        <div className="progress-summary">
-          <div className="progress-bar-track">
-            <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
-          </div>
-          <span className="progress-label">{Math.round(progressPct)}% complete</span>
+        <div className="course-hero-header">
+          <span className="course-category">{course.category || 'General'}</span>
+          <h1 className="course-detail-title">{course.title}</h1>
+          <p className="course-instructor">Taught by <strong>{course.instructor?.name || 'Faculty'}</strong></p>
+          <p className="course-desc-full">{course.description}</p>
 
-          {progressPct >= 100 && (
-            certificate ? (
-              <a
-                href={certificate.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-solid"
-                style={{ textDecoration: 'none' }}
-              >
-                Download certificate
-              </a>
-            ) : course.lessonsFinalized ? (
-              <>
-                {certError && <p className="form-error">{certError}</p>}
-                <button
-                  className="btn-solid"
-                  onClick={handleGetCertificate}
-                  disabled={issuingCert}
-                >
-                  {issuingCert ? 'Generating...' : 'Get certificate'}
+          {user?.role === 'STUDENT' && !enrolled && (
+            <div className="enroll-box">
+              {enrollError && <p className="form-error">{enrollError}</p>}
+              <div className="enroll-inputs">
+                <input
+                  type="password"
+                  placeholder="Enrollment password (if required)"
+                  value={enrollPasswordInput}
+                  onChange={(e) => setEnrollPasswordInput(e.target.value)}
+                  className="enroll-pwd-input"
+                />
+                <button className="btn-solid" onClick={handleEnroll} disabled={enrolling}>
+                  {enrolling ? 'Enrolling...' : 'Enroll in this course'}
                 </button>
-              </>
-            ) : (
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
-                Your instructor hasn't finalized this course's content yet - the certificate will become available once they do.
-              </p>
-            )
+              </div>
+            </div>
+          )}
+
+          {user?.role === 'STUDENT' && enrolled && (
+            <div className="enrolled-badge-box">
+              <span className="enrolled-status-pill">✓ Enrolled in this course</span>
+            </div>
           )}
         </div>
-      )}
 
-      {announcements.length > 0 && (
-        <div className="quiz-panel" style={{ marginBottom: '32px' }}>
-          <h4 className="quiz-panel-title">Announcements</h4>
-          {announcements.map((a) => (
-            <p key={a.id} className="lesson-text" style={{ marginBottom: '10px' }}>
-              {a.message}
-              <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                {new Date(a.createdAt).toLocaleDateString()}
-              </span>
-            </p>
-          ))}
-        </div>
-      )}
+        {user?.role === 'STUDENT' && enrolled && (
+          <div className="progress-summary-card">
+            <div className="progress-header-row">
+              <span className="progress-title">Your Course Progress</span>
+              <span className="progress-label">{Math.round(progressPct)}% complete</span>
+            </div>
+            <div className="progress-bar-track">
+              <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+
+            {progressPct >= 100 && (
+              <div className="certificate-action-row">
+                {certificate ? (
+                  <a
+                    href={certificate.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-solid btn-cert-download"
+                  >
+                    🎓 Download Official Certificate
+                  </a>
+                ) : course.lessonsFinalized ? (
+                  <>
+                    {certError && <p className="form-error">{certError}</p>}
+                    <button
+                      className="btn-solid"
+                      onClick={handleGetCertificate}
+                      disabled={issuingCert}
+                    >
+                      {issuingCert ? 'Issuing...' : '🎓 Claim Your Certificate'}
+                    </button>
+                  </>
+                ) : (
+                  <p className="cert-pending-notice">
+                    Course content is awaiting instructor finalization before certificate generation is unlocked.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {announcements.length > 0 && (
+          <div className="course-announcements-box">
+            <h4 className="announcement-title">Announcements</h4>
+            {announcements.map((a) => (
+              <div key={a.id} className="announcement-item">
+                <p className="lesson-text">{a.message}</p>
+                <span className="announcement-date">
+                  {new Date(a.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
       <h2 className="lessons-heading">Lessons</h2>
       {course.lessons && course.lessons.length > 0 ? (
@@ -456,29 +459,63 @@ const CourseDetail = () => {
             const quiz = quizzesByLesson[l.id];
 
             return (
-              <div className="lesson-item-detail" key={l.id}>
+              <div className={`lesson-item-detail ${isOpen ? 'open' : ''}`} key={l.id}>
                 <button
                   className="lesson-item-header"
                   onClick={() => canView && setOpenLessonId(isOpen ? null : l.id)}
                 >
                   <span className="lesson-num">{String(idx + 1).padStart(2, '0')}</span>
-                  <h3>{l.title}</h3>
-                  {completedLessonIds.has(l.id) && <span className="lesson-done-tag">Done</span>}
-                  {quiz && <span className="lesson-done-tag">Quiz</span>}
-                  {!canView && <span className="lesson-locked">Enroll to unlock</span>}
+                  <div className="lesson-header-title-box">
+                    <h3>{l.title}</h3>
+                  </div>
+                  <div className="lesson-header-badges">
+                    {completedLessonIds.has(l.id) && <span className="lesson-done-tag">✓ Done</span>}
+                    {quiz && <span className="lesson-quiz-tag">📝 Quiz</span>}
+                    {!canView && <span className="lesson-locked">🔒 Locked</span>}
+                    <span className="lesson-accordion-arrow">{isOpen ? '▲' : '▼'}</span>
+                  </div>
                 </button>
 
                 {isOpen && canView && (
                   <div className="lesson-content-panel">
-                    <p className="lesson-text">{l.content}</p>
+                    <div className="lesson-text-wrap">
+                      <p className="lesson-text">{l.content}</p>
+                    </div>
 
-                    <button
-                      className="btn-ai-generate"
-                      onClick={() => handleSummarize(l.id)}
-                      disabled={summarizingId === l.id}
-                    >
-                      {summarizingId === l.id ? 'Summarizing...' : summaries[l.id] ? 'Regenerate summary' : 'Summarize with AI'}
-                    </button>
+                    <div className="lesson-actions-strip">
+                      <button
+                        className="btn-ai-generate"
+                        onClick={() => handleSummarize(l.id)}
+                        disabled={summarizingId === l.id}
+                      >
+                        {summarizingId === l.id ? 'Summarizing...' : summaries[l.id] ? '✨ Regenerate summary' : '✨ Summarize with AI'}
+                      </button>
+
+                      {l.fileUrl && (
+                        <a
+                          href={l.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="file-download-link"
+                        >
+                          📎 Download {l.fileName || 'attachment'}
+                        </a>
+                      )}
+
+                      {user?.role === 'STUDENT' && enrolled && (
+                        <button
+                          className={completedLessonIds.has(l.id) ? 'btn-complete done' : 'btn-complete'}
+                          onClick={() => handleToggleComplete(l.id)}
+                          disabled={markingId === l.id}
+                        >
+                          {markingId === l.id
+                            ? 'Updating...'
+                            : completedLessonIds.has(l.id)
+                            ? '✓ Completed'
+                            : 'Mark as complete'}
+                        </button>
+                      )}
+                    </div>
 
                     {summaryError && summarizingId === null && !summaries[l.id] && (
                       <p className="form-error">{summaryError}</p>
@@ -491,8 +528,7 @@ const CourseDetail = () => {
                       </div>
                     )}
 
-                  {l.videoUrl && (
-
+                    {l.videoUrl && (
                       embedUrl ? (
                         <div className="video-embed-wrap">
                           <iframe
@@ -503,34 +539,9 @@ const CourseDetail = () => {
                         </div>
                       ) : (
                         <a href={l.videoUrl} target="_blank" rel="noreferrer" className="video-link">
-                          Watch video
+                          ▶ Watch video
                         </a>
                       )
-                    )}
-
-                    {l.fileUrl && (
-                      <a
-                        href={l.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="file-download-link"
-                      >
-                        Download {l.fileName || 'attachment'}
-                      </a>
-                    )}
-
-                    {user?.role === 'STUDENT' && enrolled && (
-                      <button
-                        className={completedLessonIds.has(l.id) ? 'btn-complete done' : 'btn-complete'}
-                        onClick={() => handleToggleComplete(l.id)}
-                        disabled={markingId === l.id}
-                      >
-                        {markingId === l.id
-                          ? 'Updating...'
-                          : completedLessonIds.has(l.id)
-                          ? 'Completed'
-                          : 'Mark as complete'}
-                      </button>
                     )}
 
                     {quiz && (

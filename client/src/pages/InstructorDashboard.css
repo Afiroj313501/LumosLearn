@@ -23,7 +23,8 @@
 
 .course-form {
   background: var(--bg-panel);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px var(--shadow-color);
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -35,8 +36,8 @@
 
 .course-form input,
 .course-form textarea {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--surface-1);
+  border: 1px solid var(--border-color-strong);
   border-radius: 10px;
   padding: 12px 14px;
   font-family: 'Sora', sans-serif;
@@ -73,7 +74,8 @@
 
 .course-card {
   background: var(--bg-panel);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px var(--shadow-color);
   border-radius: 16px;
   padding: 22px;
   display: flex;
