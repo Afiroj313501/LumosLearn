@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
+import EduLogo from './EduLogo';
 
 const TopBar = ({ onLogoClick }: { onLogoClick?: () => void }) => {
   const { user, logout } = useAuth();
@@ -22,8 +23,9 @@ const TopBar = ({ onLogoClick }: { onLogoClick?: () => void }) => {
 
   return (
     <div className="top-bar">
-      <a className="brand" onClick={goHome} style={{ cursor: 'pointer' }}>
-        Lumen<em>Learner</em>
+      <a className="brand" onClick={goHome} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <EduLogo size={22} />
+        <span>Lumen<em>Learner</em></span>
       </a>
       <div className="top-bar-actions">
         {user && <NotificationBell />}

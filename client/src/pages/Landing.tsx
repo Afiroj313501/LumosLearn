@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import type { Role } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
+import EduLogo from '../components/EduLogo';
 import { getAllCourses } from '../api/courses';
 import type { Course } from '../api/courses';
 import './Landing.css';
@@ -23,7 +24,7 @@ const SHOWCASE_COURSES = [
   },
   {
     id: 'showcase-2',
-    title: 'Applied Machine Learning with Gemini & LLMs',
+    title: 'Applied Machine Learning & Intelligent Systems',
     description: 'Build enterprise-grade AI agents, retrieval-augmented systems (RAG), and multimodal pipelines from scratch.',
     category: 'Artificial Intelligence',
     instructor: { name: 'Elena Rostova' },
@@ -69,7 +70,7 @@ const TUTOR_PROMPTS = [
 const FAQS = [
   {
     q: 'How does LumenLearner prevent AI hallucinations?',
-    a: 'Unlike generic chatbots, LumenLearner’s Gemini assistant operates strictly within the bounded context of your uploaded course files, PDF lecture slides, and notes (extracted via officeparser). If an answer is not corroborated by the instructor’s curriculum, the assistant explicitly states that it is not covered in the course material.',
+    a: 'Unlike generic chatbots, LumenLearner’s AI study assistant operates strictly within the bounded context of your uploaded course files, PDF lecture slides, and notes (extracted via officeparser). If an answer is not corroborated by the instructor’s curriculum, the assistant explicitly states that it is not covered in the course material.',
   },
   {
     q: 'Can instructors edit AI-generated quizzes before students see them?',
@@ -175,18 +176,7 @@ const Landing = () => {
         <div className="nav-container">
           <a href="#" className="nav-brand">
             <span className="brand-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-                  fill="url(#brandGrad)"
-                />
-                <defs>
-                  <linearGradient id="brandGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#f2b84b" />
-                    <stop offset="1" stopColor="#8c7cf0" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <EduLogo size={24} />
             </span>
             <span className="brand-text">
               Lumen<em>Learner</em>
@@ -255,7 +245,7 @@ const Landing = () => {
         <div className="hero-content">
           <div className="hero-pill-badge">
             <span className="pill-dot" />
-            <span>Powered by Google Gemini · Grounded LMS Intelligence</span>
+            <span>Intelligent Learning Ecosystem · Grounded Course Studio</span>
           </div>
 
           <h1 className="hero-heading">
@@ -613,7 +603,7 @@ const Landing = () => {
             <span className="feature-kicker">Automated Creation</span>
             <h3>1-Click Quiz & Summary Studio</h3>
             <p>
-              Upload PDF, PPTX, or DOCX lecture files. Gemini automatically drafts thorough multiple-choice
+              Upload PDF, PPTX, or DOCX lecture files. The AI engine automatically drafts thorough multiple-choice
               assessments with explanations ready for instructor approval.
             </p>
           </div>
@@ -1004,18 +994,7 @@ const Landing = () => {
           <div className="footer-brand-col">
             <div className="nav-brand">
               <span className="brand-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-                    fill="url(#footGrad)"
-                  />
-                  <defs>
-                    <linearGradient id="footGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#f2b84b" />
-                      <stop offset="1" stopColor="#8c7cf0" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+                <EduLogo size={22} />
               </span>
               <span className="brand-text">
                 Lumen<em>Learner</em>
@@ -1026,7 +1005,7 @@ const Landing = () => {
             </p>
             <div className="footer-status-badge">
               <span className="status-dot-pulse" />
-              <span>Platform Operational · Gemini Active</span>
+              <span>Platform Operational · All Systems Active</span>
             </div>
           </div>
 
@@ -1040,7 +1019,7 @@ const Landing = () => {
 
           <div className="footer-links-col">
             <h4>Technology</h4>
-            <span>Google Gemini AI</span>
+            <span>Contextual AI Core</span>
             <span>PERN Architecture</span>
             <span>OfficeParser Engine</span>
             <span>PDFKit Credentials</span>
