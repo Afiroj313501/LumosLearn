@@ -6,6 +6,25 @@ import crypto from 'crypto';
 import os from 'os';
 import cloudinary from '../config/cloudinary.js';
 
+function getCertificateFileUrl(fileUrl) {
+  if (!fileUrl) return fileUrl;
+
+  try {
+    const url = new URL(fileUrl);
+    if (url.hostname.endsWith('res.cloudinary.com') && url.pathname.includes('/raw/upload/')) {
+      const pathSegments = url.pathname.split('/');
+      const fileName = pathSegments[pathSegments.length - 1];
+      if (fileName && !fileName.toLowerCase().endsWith('.pdf')) {
+        pathSegments[pathSegments.length - 1] = `${fileName}.pdf`;
+        url.pathname = pathSegments.join('/');
+      }
+    }
+    return url.toString();
+  } catch {
+    return fileUrl;
+  }
+}
+
 export const issueCertificate = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -53,7 +72,17 @@ export const issueCertificate = async (req, res) => {
     const existing = await prisma.certificate.findUnique({
       where: { studentId_courseId: { studentId: req.user.userId, courseId } },
     });
-    if (existing) return res.json(existing);
+    if (existing) {
+      const fileUrl = getCertificateFileUrl(existing.fileUrl);
+      if (fileUrl !== existing.fileUrl) {
+        const repairedCertificate = await prisma.certificate.update({
+          where: { id: existing.id },
+          data: { fileUrl },
+        });
+        return res.json(repairedCertificate);
+      }
+      return res.json(existing);
+    }
 
     const fileName = `${crypto.randomUUID()}.pdf`;
     const tempPath = path.join(os.tmpdir(), fileName);
@@ -68,8 +97,7 @@ export const issueCertificate = async (req, res) => {
     const uploadResult = await cloudinary.uploader.upload(tempPath, {
       folder: 'lumenlearner_certificates',
       resource_type: 'raw',
-      public_id: fileName.replace('.pdf', ''),
-      format: 'pdf',
+      public_id: fileName,
     });
 
     fs.unlinkSync(tempPath);
@@ -78,7 +106,7 @@ export const issueCertificate = async (req, res) => {
       data: {
         studentId: req.user.userId,
         courseId,
-        fileUrl: uploadResult.secure_url,
+        fileUrl: getCertificateFileUrl(uploadResult.secure_url),
       },
     });
 
@@ -95,7 +123,10 @@ export const getMyCertificate = async (req, res) => {
     const certificate = await prisma.certificate.findUnique({
       where: { studentId_courseId: { studentId: req.user.userId, courseId } },
     });
-    res.json(certificate);
+    res.json(certificate ? {
+      ...certificate,
+      fileUrl: getCertificateFileUrl(certificate.fileUrl),
+    } : null);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch certificate' });
