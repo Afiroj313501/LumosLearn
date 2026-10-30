@@ -124,6 +124,7 @@ Create a `.env` file in `server/`:
 PORT=5000
 DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET=your_random_secret_string
+# Comma-separated frontend origins; https:// is added when omitted
 CLIENT_URL=http://localhost:5173
 GEMINI_API_KEY=your_gemini_api_key
 RESEND_API_KEY=your_resend_api_key

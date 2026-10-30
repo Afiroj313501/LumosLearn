@@ -22,7 +22,36 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+const normalizeOrigin = (value) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  try {
+    const url = new URL(trimmedValue.includes('://') ? trimmedValue : `https://${trimmedValue}`);
+    return url.origin;
+  } catch {
+    console.warn(`Ignoring invalid CLIENT_URL value: ${value}`);
+    return null;
+  }
+};
+
+const allowedOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+allowedOrigins.push('http://localhost:5173', 'http://localhost:3000');
+
+app.use(cors({
+  origin: (requestOrigin, callback) => {
+    if (!requestOrigin || allowedOrigins.includes(requestOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${requestOrigin} is not allowed by CORS`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
