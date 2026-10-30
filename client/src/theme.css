@@ -20,17 +20,17 @@ html:not([data-theme]) {
 }
 
 html[data-theme="light"] {
-  --bg-void: #faf8f4;
+  --bg-void: #f8fafc;
   --bg-panel: #ffffff;
-  --accent-lumen: #c8791a;
-  --accent-violet: #6952d6;
-  --text-primary: #221f2e;
-  --text-muted: #6b6879;
-  --surface-1: rgba(20,15,5,0.045);
-  --surface-2: rgba(20,15,5,0.025);
-  --border-color: rgba(20,15,5,0.10);
-  --border-color-strong: rgba(20,15,5,0.18);
-  --shadow-color: rgba(20,15,5,0.12);
+  --accent-lumen: #d97706;
+  --accent-violet: #6366f1;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --surface-1: #f1f5f9;
+  --surface-2: #ffffff;
+  --border-color: #e2e8f0;
+  --border-color-strong: #cbd5e1;
+  --shadow-color: rgba(15, 23, 42, 0.08);
 }
 
 body {
