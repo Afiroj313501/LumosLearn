@@ -40,18 +40,7 @@
   margin: 0 0 28px;
 }
 
-.btn-solid {
-  background: var(--accent-lumen);
-  color: #1a1305;
-  border: none;
-  font-family: 'Sora', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 12px 24px;
-  border-radius: 9px;
-  cursor: pointer;
-  margin-bottom: 40px;
-}
+.btn-solid {\}
 .btn-solid:disabled { opacity: 0.7; cursor: default; }
 
 .lessons-heading {
